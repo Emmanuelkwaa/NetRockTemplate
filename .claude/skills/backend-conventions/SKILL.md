@@ -9,19 +9,19 @@ user-invocable: false
 
 ```
 src/backend/
-├── MyProject.Shared/              # Result, ErrorType, ErrorMessages (zero deps)
-├── MyProject.Domain/Entities/     # Business entities (BaseEntity)
-├── MyProject.Application/         # Interfaces, DTOs, service contracts
+├── NetRockTemplate.Shared/              # Result, ErrorType, ErrorMessages (zero deps)
+├── NetRockTemplate.Domain/Entities/     # Business entities (BaseEntity)
+├── NetRockTemplate.Application/         # Interfaces, DTOs, service contracts
 │   ├── Features/{Feature}/I{Feature}Service.cs
 │   ├── Features/{Feature}/Dtos/{Operation}Input.cs, {Entity}Output.cs
 │   ├── Identity/IUserService.cs, IUserContext.cs
 │   └── Identity/Constants/AppRoles.cs, AppPermissions.cs
-├── MyProject.Infrastructure/      # Implementations (all internal)
+├── NetRockTemplate.Infrastructure/      # Implementations (all internal)
 │   ├── Features/{Feature}/Services/, Configurations/, Extensions/
-│   └── Persistence/MyProjectDbContext.cs
-├── MyProject.ServiceDefaults/     # Aspire shared: OTEL, service discovery, resilience
-├── MyProject.AppHost/             # Aspire orchestrator (local dev only)
-└── MyProject.WebApi/              # Entry point
+│   └── Persistence/NetRockTemplateDbContext.cs
+├── NetRockTemplate.ServiceDefaults/     # Aspire shared: OTEL, service discovery, resilience
+├── NetRockTemplate.AppHost/             # Aspire orchestrator (local dev only)
+└── NetRockTemplate.WebApi/              # Entry point
     ├── Features/{Feature}/{Feature}Controller.cs, {Feature}Mapper.cs
     ├── Features/{Feature}/Dtos/{Operation}/{Operation}Request.cs + Validator
     ├── Authorization/             # RequirePermission, PermissionPolicyProvider
@@ -79,8 +79,8 @@ Configurations inherit `BaseEntityConfiguration<T>` (`public abstract`), overrid
 Migration command:
 ```bash
 dotnet ef migrations add {Name} \
-  --project src/backend/MyProject.Infrastructure \
-  --startup-project src/backend/MyProject.WebApi \
+  --project src/backend/NetRockTemplate.Infrastructure \
+  --startup-project src/backend/NetRockTemplate.WebApi \
   --output-dir Persistence/Migrations
 ```
 
@@ -242,6 +242,6 @@ Response contracts: frozen records in `Contracts/ResponseContracts.cs` - deseria
 
 ## Aspire (Local Development)
 
-Run: `dotnet run --project src/backend/MyProject.AppHost` - launches PostgreSQL, MinIO, MailPit, API, and Frontend. See `/add-aspire-dep` skill for adding dependencies.
+Run: `dotnet run --project src/backend/NetRockTemplate.AppHost` - launches PostgreSQL, MinIO, MailPit, API, and Frontend. See `/add-aspire-dep` skill for adding dependencies.
 
 **Logging gotcha**: Serilog bridges to OTEL via `writeToProviders: true` - do NOT add `Serilog.Sinks.OpenTelemetry` (causes duplicate logs).

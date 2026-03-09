@@ -1,6 +1,6 @@
 {
-  "name": "MyProject",
-  "short_name": "MyProject",
+  "name": "NetRockTemplate",
+  "short_name": "NetRockTemplate",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

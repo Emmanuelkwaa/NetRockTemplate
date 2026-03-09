@@ -1,7 +1,7 @@
 # Entity Template
 
 ```csharp
-namespace MyProject.Domain.Entities;
+namespace NetRockTemplate.Domain.Entities;
 
 /// <summary>
 /// Represents a {EntityDescription}.

@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <ProjectReference Include="../NetRockTemplate.Domain/NetRockTemplate.Domain.csproj"/>
+        <ProjectReference Include="../NetRockTemplate.Shared/NetRockTemplate.Shared.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Features/" />
+    </ItemGroup>
+
+</Project>

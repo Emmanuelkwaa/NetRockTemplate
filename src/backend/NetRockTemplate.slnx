@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/solution items/">
+    <File Path="../../.config/dotnet-tools.json" />
+    <File Path="../../global.json" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="NetRockTemplate.WebApi/Dockerfile" />
+    <File Path="nuget.config" />
+  </Folder>
+  <Project Path="NetRockTemplate.Application/NetRockTemplate.Application.csproj" />
+  <Project Path="NetRockTemplate.Domain/NetRockTemplate.Domain.csproj" />
+  <Project Path="NetRockTemplate.Infrastructure/NetRockTemplate.Infrastructure.csproj" />
+  <Project Path="NetRockTemplate.Shared/NetRockTemplate.Shared.csproj" />
+  <Project Path="NetRockTemplate.WebApi/NetRockTemplate.WebApi.csproj" />
+  <Project Path="NetRockTemplate.ServiceDefaults/NetRockTemplate.ServiceDefaults.csproj" />
+  <Project Path="NetRockTemplate.AppHost/NetRockTemplate.AppHost.csproj" />
+  <Folder Name="/tools/">
+    <Project Path="HealthProbe/HealthProbe.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NetRockTemplate.Unit.Tests/NetRockTemplate.Unit.Tests.csproj" />
+    <Project Path="tests/NetRockTemplate.Component.Tests/NetRockTemplate.Component.Tests.csproj" />
+    <Project Path="tests/NetRockTemplate.Api.Tests/NetRockTemplate.Api.Tests.csproj" />
+    <Project Path="tests/NetRockTemplate.Architecture.Tests/NetRockTemplate.Architecture.Tests.csproj" />
+  </Folder>
+</Solution>
