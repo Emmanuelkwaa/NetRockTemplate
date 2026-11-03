@@ -26,6 +26,119 @@
   ],
   "rules": [
     {
+      "when": "auth=keycloak,none",
+      "delete": [
+        "src/backend/NetRockTemplate.Application/Features/Admin",
+        "src/backend/NetRockTemplate.Application/Features/Audit",
+        "src/backend/NetRockTemplate.Application/Features/Authentication",
+        "src/backend/NetRockTemplate.Application/Features/Avatar",
+        "src/backend/NetRockTemplate.Application/Features/Captcha",
+        "src/backend/NetRockTemplate.Application/Features/Email/EmailTemplateNames.cs",
+        "src/backend/NetRockTemplate.Application/Features/Email/Models",
+        "src/backend/NetRockTemplate.Application/Identity",
+        "src/backend/NetRockTemplate.Application/Caching/Constants",
+        "src/backend/NetRockTemplate.Application/Cryptography",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Admin",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Audit",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Authentication",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Avatar",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Captcha",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Email/Templates/admin-*",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Email/Templates/invitation*",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Email/Templates/reset-password*",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Email/Templates/verify-email*",
+        "src/backend/NetRockTemplate.Infrastructure/Features/Jobs/RecurringJobs",
+        "src/backend/NetRockTemplate.Infrastructure/Identity",
+        "src/backend/NetRockTemplate.Infrastructure/Cryptography",
+        "src/backend/NetRockTemplate.Infrastructure/Persistence/Interceptors/UserCacheInvalidationInterceptor.cs",
+        "src/backend/NetRockTemplate.Infrastructure/Persistence/Options/SeedOptions.cs",
+        "src/backend/NetRockTemplate.WebApi/Authorization",
+        "src/backend/NetRockTemplate.WebApi/Features/Admin",
+        "src/backend/NetRockTemplate.WebApi/Features/Audit",
+        "src/backend/NetRockTemplate.WebApi/Features/Authentication",
+        "src/backend/NetRockTemplate.WebApi/Features/Users",
+        "src/backend/NetRockTemplate.WebApi/Routing",
+        "src/backend/tests/NetRockTemplate.Api.Tests/Contracts",
+        "src/backend/tests/NetRockTemplate.Api.Tests/Controllers",
+        "src/backend/tests/NetRockTemplate.Api.Tests/Features",
+        "src/backend/tests/NetRockTemplate.Api.Tests/Validators",
+        "src/backend/tests/NetRockTemplate.Api.Tests/Fixtures/TestAuthHandler.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Cryptography",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Fixtures/IdentityMockHelpers.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Fixtures/MockHttpClientFactory.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Fixtures/MockHttpMessageHandler.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/Admin*",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/AuditServiceTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/AuthenticationServiceTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/ExternalAuthServiceTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/ExternalProviders",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/FluidEmailTemplateRendererTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/TemplatedEmailSenderTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/ImageProcessingServiceTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/RoleManagementServiceTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/TwoFactorServiceTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Services/UserServiceTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Validation/AuthenticationOptionsValidationTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Validation/CaptchaOptionsValidationTests.cs",
+        "src/backend/tests/NetRockTemplate.Component.Tests/Validation/ExternalAuthOptionsValidationTests.cs",
+        "src/backend/tests/NetRockTemplate.Unit.Tests/Application"
+      ],
+      "overlay": "auth-common",
+      "json": [
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.json",
+          "remove": [
+            "Authentication",
+            "Captcha",
+            "RateLimiting:Registration",
+            "RateLimiting:Sensitive",
+            "RateLimiting:AdminMutations"
+          ]
+        },
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.Development.json",
+          "remove": [
+            "Authentication",
+            "Captcha",
+            "Seed"
+          ]
+        },
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.Testing.json",
+          "remove": [
+            "Authentication",
+            "Captcha",
+            "RateLimiting:Registration",
+            "RateLimiting:Sensitive",
+            "RateLimiting:AdminMutations"
+          ]
+        }
+      ]
+    },
+    {
+      "when": "auth=none",
+      "delete": [
+        "src/backend/NetRockTemplate.Application/Cookies",
+        "src/backend/NetRockTemplate.Infrastructure/Cookies",
+        "src/backend/NetRockTemplate.WebApi/Features/OpenApi/Transformers/BearerSecurityOperationTransformer.cs"
+      ],
+      "overlay": "auth-none",
+      "json": [
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.json",
+          "remove": [
+            "RateLimiting:Auth"
+          ]
+        },
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.Testing.json",
+          "remove": [
+            "RateLimiting:Auth"
+          ]
+        }
+      ]
+    },
+    {
       "when": "frontend=no",
       "delete": [
         "src/frontend",

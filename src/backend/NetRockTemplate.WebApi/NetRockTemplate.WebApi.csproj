@@ -12,7 +12,9 @@
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
         <PackageReference Include="Hangfire.AspNetCore" />
         <PackageReference Include="FluentValidation.AspNetCore" />
+        <!-- @init:if auth=jwt,keycloak -->
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+        <!-- @init:end -->
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
           <PrivateAssets>all</PrivateAssets>

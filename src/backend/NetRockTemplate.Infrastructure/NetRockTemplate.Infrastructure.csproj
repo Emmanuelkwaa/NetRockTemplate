@@ -15,8 +15,12 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+        <!-- @init:if auth=jwt,keycloak -->
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+        <!-- @init:end -->
+        <!-- @init:if auth=jwt -->
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+        <!-- @init:end -->
         <PackageReference Include="Newtonsoft.Json" />
         <PackageReference Include="Hangfire.AspNetCore" />
         <PackageReference Include="Hangfire.Core" />

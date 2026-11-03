@@ -21,8 +21,12 @@
     <PackageVersion Include="MailKit" Version="4.15.1" />
     <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.1" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
+    <!-- @init:if auth=jwt,keycloak -->
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="$(FrameworkVersion)" />
+    <!-- @init:end -->
+    <!-- @init:if auth=jwt -->
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="$(FrameworkVersion)" />
+    <!-- @init:end -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="$(FrameworkVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(FrameworkVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="$(FrameworkVersion)" />

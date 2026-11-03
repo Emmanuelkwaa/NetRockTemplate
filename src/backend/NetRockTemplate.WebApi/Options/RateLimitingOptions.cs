@@ -21,6 +21,7 @@ public sealed class RateLimitingOptions
     [ValidateObjectMembers]
     public GlobalLimitOptions Global { get; init; } = new();
 
+    // @init:if auth=jwt
     /// <summary>
     /// Gets or sets the registration endpoint rate limiter configuration.
     /// Applies a stricter fixed-window limit to prevent automated account creation, partitioned by IP address.
@@ -28,7 +29,9 @@ public sealed class RateLimitingOptions
     [Required]
     [ValidateObjectMembers]
     public RegistrationLimitOptions Registration { get; init; } = new();
+    // @init:end
 
+    // @init:if auth=jwt,keycloak
     /// <summary>
     /// Gets or sets the authentication rate limiter configuration.
     /// Applies a stricter fixed-window limit to login and token refresh endpoints to prevent brute-force attacks,
@@ -37,7 +40,9 @@ public sealed class RateLimitingOptions
     [Required]
     [ValidateObjectMembers]
     public AuthLimitOptions Auth { get; init; } = new();
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Gets or sets the sensitive operations rate limiter configuration.
     /// Applies a stricter fixed-window limit to password changes and account deletions,
@@ -46,7 +51,9 @@ public sealed class RateLimitingOptions
     [Required]
     [ValidateObjectMembers]
     public SensitiveLimitOptions Sensitive { get; init; } = new();
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Gets or sets the admin mutations rate limiter configuration.
     /// Applies a stricter fixed-window limit to state-changing admin and job management operations,
@@ -55,6 +62,7 @@ public sealed class RateLimitingOptions
     [Required]
     [ValidateObjectMembers]
     public AdminMutationsLimitOptions AdminMutations { get; init; } = new();
+    // @init:end
 
     /// <summary>
     /// Base configuration for a fixed-window rate limit policy.
@@ -117,6 +125,7 @@ public sealed class RateLimitingOptions
         }
     }
 
+    // @init:if auth=jwt
     /// <summary>
     /// Configuration options for the registration endpoint fixed-window rate limiter.
     /// Defaults to 5 requests per 1 minute with no queuing.
@@ -133,7 +142,9 @@ public sealed class RateLimitingOptions
             QueueLimit = 0;
         }
     }
+    // @init:end
 
+    // @init:if auth=jwt,keycloak
     /// <summary>
     /// Configuration options for the authentication fixed-window rate limiter.
     /// Applied to login and token refresh endpoints, partitioned by IP address.
@@ -151,7 +162,9 @@ public sealed class RateLimitingOptions
             QueueLimit = 0;
         }
     }
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Configuration options for the sensitive operations fixed-window rate limiter.
     /// Applied to password changes and account deletions, partitioned by authenticated user.
@@ -169,7 +182,9 @@ public sealed class RateLimitingOptions
             QueueLimit = 0;
         }
     }
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Configuration options for the admin mutations fixed-window rate limiter.
     /// Applied to state-changing admin and job management endpoints, partitioned by authenticated user.
@@ -187,4 +202,5 @@ public sealed class RateLimitingOptions
             QueueLimit = 0;
         }
     }
+    // @init:end
 }

@@ -1,12 +1,11 @@
-using NetRockTemplate.Infrastructure.Features.Authentication.Models;
 using NetArchTest.Rules;
 
 namespace NetRockTemplate.Architecture.Tests;
 
 public class AccessModifierTests
 {
-    private static readonly System.Reflection.Assembly InfrastructureAssembly = typeof(ApplicationUser).Assembly;
-    private static readonly System.Reflection.Assembly ApplicationAssembly = typeof(Application.Identity.Constants.AppRoles).Assembly;
+    private static readonly System.Reflection.Assembly InfrastructureAssembly = typeof(Infrastructure.Persistence.Extensions.ServiceCollectionExtensions).Assembly;
+    private static readonly System.Reflection.Assembly ApplicationAssembly = typeof(Application.Persistence.IBaseEntityRepository<>).Assembly;
 
     [Fact]
     public void InfrastructureServices_ShouldNotBePublic()

@@ -140,6 +140,7 @@ public class RateLimitingOptionsValidationTests
         Assert.Empty(results);
     }
 
+    // @init:if auth=jwt
     [Fact]
     public void RegistrationLimitOptions_DefaultValues_Valid()
     {
@@ -149,7 +150,9 @@ public class RateLimitingOptionsValidationTests
 
         Assert.Empty(results);
     }
+    // @init:end
 
+    // @init:if auth=jwt,keycloak
     [Fact]
     public void AuthLimitOptions_DefaultValues_Valid()
     {
@@ -159,7 +162,9 @@ public class RateLimitingOptionsValidationTests
 
         Assert.Empty(results);
     }
+    // @init:end
 
+    // @init:if auth=jwt
     [Fact]
     public void SensitiveLimitOptions_DefaultValues_Valid()
     {
@@ -169,7 +174,9 @@ public class RateLimitingOptionsValidationTests
 
         Assert.Empty(results);
     }
+    // @init:end
 
+    // @init:if auth=jwt
     [Fact]
     public void AdminMutationsLimitOptions_DefaultValues_Valid()
     {
@@ -179,6 +186,7 @@ public class RateLimitingOptionsValidationTests
 
         Assert.Empty(results);
     }
+    // @init:end
 
     #endregion
 }

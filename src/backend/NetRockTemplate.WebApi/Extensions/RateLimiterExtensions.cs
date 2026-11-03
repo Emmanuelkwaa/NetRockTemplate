@@ -39,10 +39,16 @@ internal static class RateLimiterExtensions
             ConfigureGlobalLimiter(opt, rateLimitOptions.Global);
             ConfigureOnRejected(opt);
 
+            // @init:if auth=jwt
             AddIpPolicy(opt, RateLimitPolicies.Registration, rateLimitOptions.Registration);
+            // @init:end
+            // @init:if auth=jwt,keycloak
             AddIpPolicy(opt, RateLimitPolicies.Auth, rateLimitOptions.Auth);
+            // @init:end
+            // @init:if auth=jwt
             AddUserPolicy(opt, RateLimitPolicies.Sensitive, rateLimitOptions.Sensitive);
             AddUserPolicy(opt, RateLimitPolicies.AdminMutations, rateLimitOptions.AdminMutations);
+            // @init:end
         });
 
         return services;
@@ -105,6 +111,7 @@ internal static class RateLimiterExtensions
         };
     }
 
+    // @init:if auth=jwt,keycloak
     /// <summary>
     /// Adds a fixed-window rate limit policy partitioned by client IP address.
     /// Suitable for unauthenticated endpoints (login, registration, token refresh).
@@ -126,7 +133,9 @@ internal static class RateLimiterExtensions
                 _ => CreateFixedWindowOptions(policyOptions));
         });
     }
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Adds a fixed-window rate limit policy partitioned by authenticated user identity,
     /// falling back to client IP address when the user is not authenticated.
@@ -150,6 +159,7 @@ internal static class RateLimiterExtensions
                 _ => CreateFixedWindowOptions(policyOptions));
         });
     }
+    // @init:end
 
     /// <summary>
     /// Creates <see cref="FixedWindowRateLimiterOptions"/> from a <see cref="RateLimitingOptions.FixedWindowPolicyOptions"/> configuration.

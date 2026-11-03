@@ -5,7 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using NetRockTemplate.Application.Features.Jobs;
 using NetRockTemplate.Infrastructure.Features.Jobs.Examples;
 using NetRockTemplate.Infrastructure.Features.Jobs.Options;
+// @init:if auth=jwt
 using NetRockTemplate.Infrastructure.Features.Jobs.RecurringJobs;
+// @init:end
 using NetRockTemplate.Infrastructure.Features.Jobs.Services;
 
 namespace NetRockTemplate.Infrastructure.Features.Jobs.Extensions;
@@ -63,6 +65,7 @@ public static class ServiceCollectionExtensions
             });
 
             // Register recurring job definitions — add new jobs here.
+            // @init:if auth=jwt
             services.AddScoped<ExpiredRefreshTokenCleanupJob>();
             services.AddScoped<IRecurringJobDefinition>(sp =>
                 sp.GetRequiredService<ExpiredRefreshTokenCleanupJob>());
@@ -74,6 +77,7 @@ public static class ServiceCollectionExtensions
             services.AddScoped<ExpiredTwoFactorChallengeCleanupJob>();
             services.AddScoped<IRecurringJobDefinition>(sp =>
                 sp.GetRequiredService<ExpiredTwoFactorChallengeCleanupJob>());
+            // @init:end
 
             // Register fire-and-forget job classes — Hangfire resolves them from DI when executed.
             // Example: backgroundJobClient.Enqueue<ExampleFireAndForgetJob>(job => job.ExecuteAsync("hello"));

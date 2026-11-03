@@ -1,4 +1,3 @@
-using NetRockTemplate.Infrastructure.Features.Authentication.Models;
 using NetArchTest.Rules;
 
 namespace NetRockTemplate.Architecture.Tests;
@@ -7,8 +6,8 @@ public class DependencyTests
 {
     private static readonly System.Reflection.Assembly SharedAssembly = typeof(Shared.Result).Assembly;
     private static readonly System.Reflection.Assembly DomainAssembly = typeof(Domain.Entities.BaseEntity).Assembly;
-    private static readonly System.Reflection.Assembly ApplicationAssembly = typeof(Application.Identity.Constants.AppRoles).Assembly;
-    private static readonly System.Reflection.Assembly InfrastructureAssembly = typeof(ApplicationUser).Assembly;
+    private static readonly System.Reflection.Assembly ApplicationAssembly = typeof(Application.Persistence.IBaseEntityRepository<>).Assembly;
+    private static readonly System.Reflection.Assembly InfrastructureAssembly = typeof(Infrastructure.Persistence.Extensions.ServiceCollectionExtensions).Assembly;
     private static readonly System.Reflection.Assembly WebApiAssembly = typeof(Program).Assembly;
 
     [Fact]
