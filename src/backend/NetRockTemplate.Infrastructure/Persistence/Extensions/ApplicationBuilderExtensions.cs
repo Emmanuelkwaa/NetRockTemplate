@@ -18,8 +18,9 @@ namespace NetRockTemplate.Infrastructure.Persistence.Extensions;
 public static class ApplicationBuilderExtensions
 {
     /// <summary>
-    /// Initializes the database: applies migrations (development only), seeds roles (always),
-    /// and seeds users from configuration (always — env vars gate whether any users are seeded).
+    /// Initializes the database: applies migrations (in Development, or when <c>Database:MigrateOnStartup</c>
+    /// is enabled), seeds roles (always), and seeds users from configuration (always - env vars gate whether
+    /// any users are seeded).
     /// </summary>
     /// <param name="appBuilder">The application builder.</param>
     public static async Task InitializeDatabaseAsync(this IApplicationBuilder appBuilder)
@@ -27,8 +28,10 @@ public static class ApplicationBuilderExtensions
         using var scope = appBuilder.ApplicationServices.CreateScope();
         var services = scope.ServiceProvider;
         var isDevelopment = services.GetRequiredService<IHostEnvironment>().IsDevelopment();
+        var databaseOptions = services.GetRequiredService<IConfiguration>()
+            .GetSection(DatabaseOptions.SectionName).Get<DatabaseOptions>() ?? new DatabaseOptions();
 
-        if (isDevelopment)
+        if (isDevelopment || databaseOptions.MigrateOnStartup)
         {
             ApplyMigrations(services);
         }
