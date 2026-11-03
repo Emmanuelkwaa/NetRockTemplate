@@ -1,0 +1,128 @@
+# Production stack (single instance).
+#   cp .env.example .env    # then fill in every value
+#   docker compose up -d --build
+# See docs/deployment.md.
+
+services:
+  api:
+    build:
+      context: ./src/backend
+      dockerfile: NetRockTemplate.WebApi/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Hosting__ForceHttps: ${Hosting__ForceHttps:-true}
+# @init:if database=managed
+      ConnectionStrings__Database: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Database__MigrateOnStartup: ${Database__MigrateOnStartup:-true}
+# @init:else
+      ConnectionStrings__Database: ${ConnectionStrings__Database}
+      Database__MigrateOnStartup: ${Database__MigrateOnStartup:-false}
+# @init:end
+# @init:if auth=jwt
+      Authentication__Jwt__Key: ${Authentication__Jwt__Key}
+      Authentication__ExternalProviders__EncryptionKey: ${Authentication__ExternalProviders__EncryptionKey}
+      Captcha__SecretKey: ${Captcha__SecretKey}
+      Seed__Users__0__Email: ${Seed__Users__0__Email:-}
+      Seed__Users__0__Password: ${Seed__Users__0__Password:-}
+      Seed__Users__0__Role: Superuser
+# @init:end
+# @init:if auth=keycloak
+      Authentication__Keycloak__Authority: ${Authentication__Keycloak__Authority}
+      Authentication__Keycloak__ClientId: ${Authentication__Keycloak__ClientId}
+      Authentication__Keycloak__ClientSecret: ${Authentication__Keycloak__ClientSecret}
+# @init:end
+      FileStorage__Endpoint: ${FileStorage__Endpoint}
+      FileStorage__AccessKey: ${FileStorage__AccessKey}
+      FileStorage__SecretKey: ${FileStorage__SecretKey}
+      FileStorage__BucketName: ${FileStorage__BucketName:-net-rock-template-files}
+      FileStorage__UseSSL: ${FileStorage__UseSSL:-true}
+      Email__Enabled: ${Email__Enabled:-false}
+      Email__FromAddress: ${Email__FromAddress:-noreply@example.com}
+      Email__FrontendBaseUrl: ${PUBLIC_URL}
+      Email__Smtp__Host: ${Email__Smtp__Host:-}
+      Email__Smtp__Port: ${Email__Smtp__Port:-587}
+      Email__Smtp__Username: ${Email__Smtp__Username:-}
+      Email__Smtp__Password: ${Email__Smtp__Password:-}
+      Email__Smtp__UseSsl: ${Email__Smtp__UseSsl:-true}
+      Cors__AllowedOrigins__0: ${PUBLIC_URL}
+# @init:if frontend=yes
+    expose:
+      - "8080"
+# @init:else
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+# @init:end
+    healthcheck:
+      test: [ "CMD", "dotnet", "healthprobe/HealthProbe.dll", "http://localhost:8080/health/live" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+# @init:if database=managed
+    depends_on:
+      postgres:
+        condition: service_healthy
+# @init:end
+    restart: unless-stopped
+    networks:
+      - app
+      # - coolify
+
+# @init:if frontend=yes
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+    environment:
+      API_URL: http://api:8080
+      ORIGIN: ${PUBLIC_URL}
+      PORT: "3000"
+# @init:if auth=jwt
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+# @init:end
+    ports:
+      - "${HTTP_PORT:-3000}:3000"
+    healthcheck:
+      test: [ "CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app
+      # - coolify
+
+# @init:end
+# @init:if database=managed
+  postgres:
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - app
+
+volumes:
+  postgres-data:
+
+# @init:end
+networks:
+  app:
+    driver: bridge
+  # Optional: join an existing reverse proxy network (e.g. Coolify). Uncomment this
+  # block and the "- coolify" lines above, and remove the ports mappings.
+  # coolify:
+  #   external: true

@@ -1,6 +1,22 @@
 {
-  "excludeNames": [".git", "bin", "obj", "node_modules", ".svelte-kit", ".env.local", ".idea", ".DS_Store"],
-  "excludePaths": ["init.sh", "init.ps1", "tools/init", "template-options", "docs/init-options-handoff.md", "docs/sessions"],
+  "excludeNames": [
+    ".git",
+    "bin",
+    "obj",
+    "node_modules",
+    ".svelte-kit",
+    ".env.local",
+    ".idea",
+    ".DS_Store"
+  ],
+  "excludePaths": [
+    "init.sh",
+    "init.ps1",
+    "tools/init",
+    "template-options",
+    "docs/init-options-handoff.md",
+    "docs/sessions"
+  ],
   "secrets": [
     "pIdwzftb8uQqf0OQTdwMWFEisvUJNiGzg8dUSYnL1YOQsiZPLX7WkP50nYXRmpAr",
     "V4hk1SHYika2BfMzTUa51QGr3olXfehdiKpHpaRLJNhMNv32om4K2AgmdOCqcZ7e",
@@ -8,5 +24,32 @@
     "ThisIsADevelopmentOnlyEncryptionKeyThatIsAtLeast32CharsLong!",
     "DevPassword123!"
   ],
-  "rules": []
+  "rules": [
+    {
+      "when": "frontend=no",
+      "delete": [
+        "src/frontend",
+        ".claude/agents/frontend-engineer.md",
+        ".claude/agents/frontend-reviewer.md",
+        ".claude/agents/fullstack-engineer.md",
+        ".claude/agents/ux-designer.md",
+        ".claude/skills/frontend-conventions",
+        ".claude/skills/new-page",
+        ".claude/skills/gen-types",
+        ".claude/skills/review-design"
+      ],
+      "json": [
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.Development.json",
+          "set": {
+            "Email:FrontendBaseUrl": "http://localhost:13002"
+          }
+        }
+      ]
+    },
+    {
+      "when": "deploy=compose",
+      "overlay": "deploy-compose"
+    }
+  ]
 }
