@@ -726,7 +726,20 @@ static class Markers
         }
 
         if (stack.Count > 0) throw new InitException("unclosed @init:if block");
-        return string.Join(newline, result);
+        return string.Join(newline, CollapseBlankRuns(result));
+    }
+
+    // Removed blocks often leave two blank lines next to each other; keep one.
+    private static IEnumerable<string> CollapseBlankRuns(List<string> lines)
+    {
+        var previousBlank = false;
+        foreach (var line in lines)
+        {
+            var blank = line.Trim().Length == 0;
+            if (blank && previousBlank) continue;
+            previousBlank = blank;
+            yield return line;
+        }
     }
 
     private static string Uncomment(string line)
