@@ -8,7 +8,12 @@ public class ErrorMessagesTests
     // @init:if auth=jwt
     private static readonly string[] ExpectedNestedClasses =
         ["Auth", "User", "Admin", "Roles", "Pagination", "Server", "Jobs", "Security", "Entity"];
-    // @init:else uncomment
+    // @init:end
+    // @init:if auth=keycloak uncomment
+    // private static readonly string[] ExpectedNestedClasses =
+    //     ["Pagination", "Server", "Jobs", "Security", "Entity", "Keycloak"];
+    // @init:end
+    // @init:if auth=none uncomment
     // private static readonly string[] ExpectedNestedClasses =
     //     ["Pagination", "Server", "Jobs", "Security", "Entity"];
     // @init:end

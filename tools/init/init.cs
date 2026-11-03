@@ -323,6 +323,18 @@ static class Generator
             Markers.ApplyToFile(file, options);
         }
 
+        if (s.Auth == "keycloak")
+        {
+            var keycloak = new Dictionary<string, JsonNode?>();
+            if (!string.IsNullOrEmpty(s.KeycloakAuthority)) keycloak["Authentication:Keycloak:Authority"] = s.KeycloakAuthority;
+            if (!string.IsNullOrEmpty(s.KeycloakClientId)) keycloak["Authentication:Keycloak:ClientId"] = s.KeycloakClientId;
+            if (keycloak.Count > 0)
+            {
+                var file = $"src/backend/{TemplateName}.WebApi/appsettings.json";
+                JsonEdits.Apply(Path.Combine(output, file), new JsonEdit(file, [], keycloak));
+            }
+        }
+
         Ui.Step("Renaming project");
         Rename(output, s, textFiles);
 

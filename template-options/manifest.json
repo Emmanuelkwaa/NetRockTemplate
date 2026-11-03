@@ -139,6 +139,32 @@
       ]
     },
     {
+      "when": "auth=keycloak",
+      "overlay": "auth-keycloak",
+      "json": [
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.json",
+          "set": {
+            "Authentication:Keycloak": {
+              "Authority": "",
+              "ClientId": "",
+              "ClientSecret": ""
+            }
+          }
+        },
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.Testing.json",
+          "set": {
+            "Authentication:Keycloak": {
+              "Authority": "https://keycloak.test/realms/test",
+              "ClientId": "test-client",
+              "ClientSecret": "test-secret"
+            }
+          }
+        }
+      ]
+    },
+    {
       "when": "frontend=no",
       "delete": [
         "src/frontend",

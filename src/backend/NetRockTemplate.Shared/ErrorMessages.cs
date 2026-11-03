@@ -212,4 +212,20 @@ public static class ErrorMessages
         public const string NotFound = "Entity not found.";
         public const string NotDeleted = "Entity could not be deleted.";
     }
+    // @init:if auth=keycloak uncomment
+    //
+    // /// <summary>
+    // /// Keycloak sign-in error messages.
+    // /// </summary>
+    // public static class Keycloak
+    // {
+    //     public const string Unavailable = "The identity provider is unavailable. Please try again later.";
+    //     public const string InvalidReturnUrl = "The return URL must be a local path.";
+    //     public const string LoginStateInvalid = "The sign-in request expired or is invalid. Please sign in again.";
+    //     public const string SignInRefused = "The identity provider did not complete the sign-in.";
+    //     public const string CodeExchangeFailed = "The sign-in could not be completed. Please sign in again.";
+    //     public const string RefreshFailed = "Your session has expired. Please sign in again.";
+    //     public const string TokenMissing = "No refresh token was provided.";
+    // }
+    // @init:end
 }
