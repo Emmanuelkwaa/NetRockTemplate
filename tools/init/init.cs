@@ -597,8 +597,8 @@ static class NextSteps
         if (s.Database == "external")
         {
             Ui.Warn("External PostgreSQL: the database needs the pg_trgm extension (used for fuzzy search).");
-            Ui.Sub("The migration runs CREATE EXTENSION IF NOT EXISTS pg_trgm, which needs a role allowed to create extensions.");
-            Ui.Sub("If the app's user lacks that right, ask an admin to run: CREATE EXTENSION IF NOT EXISTS pg_trgm;");
+            Ui.Sub("The migration runs CREATE EXTENSION IF NOT EXISTS pg_trgm. On PostgreSQL 13+ that needs the CREATE privilege");
+            Ui.Sub("on the database; older versions need a superuser. Otherwise ask an admin to run it before migrating.");
             Ui.Sub("Migrations do not run automatically against an external database. See docs/deployment.md.");
         }
 

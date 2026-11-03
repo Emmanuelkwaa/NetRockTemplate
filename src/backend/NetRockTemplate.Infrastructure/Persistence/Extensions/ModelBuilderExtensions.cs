@@ -28,14 +28,19 @@ internal static class ModelBuilderExtensions
         }
 
         /// <summary>
-        /// Registers the PostgreSQL <c>similarity</c> function for use in LINQ queries.
+        /// Enables the PostgreSQL <c>pg_trgm</c> extension and registers its <c>similarity</c>
+        /// function for use in LINQ queries. Migrations run <c>CREATE EXTENSION IF NOT EXISTS pg_trgm</c>,
+        /// which needs the CREATE privilege on the database (pg_trgm is a trusted extension).
         /// </summary>
-        public void ApplyFuzzySearch() =>
+        public void ApplyFuzzySearch()
+        {
+            builder.HasPostgresExtension("pg_trgm");
             builder
                 .HasDbFunction(
                     typeof(StringExtensions)
                         .GetMethod(nameof(StringExtensions.Similarity))!)
                 .HasName("similarity")
                 .IsBuiltIn();
+        }
     }
 }
