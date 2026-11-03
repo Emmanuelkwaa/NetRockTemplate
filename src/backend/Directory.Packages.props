@@ -4,8 +4,15 @@
     <FrameworkVersion>10.0.3</FrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
+    <!-- @init:if deploy=aspire uncomment -->
+    <!-- <PackageVersion Include="Aspire.Hosting.Docker" Version="13.1.2-preview.1.26125.13" /> -->
+    <!-- @init:end -->
+    <!-- @init:if frontend=yes -->
     <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.1.2" />
+    <!-- @init:end -->
+    <!-- @init:if database=managed -->
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.1.2" />
+    <!-- @init:end -->
 
     <PackageVersion Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="10.3.0" />

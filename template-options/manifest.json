@@ -1,0 +1,12 @@
+{
+  "excludeNames": [".git", "bin", "obj", "node_modules", ".svelte-kit", ".env.local", ".idea", ".DS_Store"],
+  "excludePaths": ["init.sh", "init.ps1", "tools/init", "template-options", "docs/init-options-handoff.md", "docs/sessions"],
+  "secrets": [
+    "pIdwzftb8uQqf0OQTdwMWFEisvUJNiGzg8dUSYnL1YOQsiZPLX7WkP50nYXRmpAr",
+    "V4hk1SHYika2BfMzTUa51QGr3olXfehdiKpHpaRLJNhMNv32om4K2AgmdOCqcZ7e",
+    "ThisIsADevelopmentJwtSecretKeyThatIsLongEnoughForHMACSHA256Signing",
+    "ThisIsADevelopmentOnlyEncryptionKeyThatIsAtLeast32CharsLong!",
+    "DevPassword123!"
+  ],
+  "rules": []
+}
