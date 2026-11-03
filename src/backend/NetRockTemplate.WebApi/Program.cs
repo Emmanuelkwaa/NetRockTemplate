@@ -194,6 +194,7 @@ try
     Log.Debug("Setting up job scheduling");
     app.UseJobScheduling();
 
+    // @init:if frontend=yes
     Log.Debug("Setting \"security\" measure => Redirect to YouTube video to confuse enemies");
     app.Use(async (context, next) =>
     {
@@ -205,6 +206,13 @@ try
 
         await next();
     });
+    // @init:else uncomment
+    // if (!app.Environment.IsProduction())
+    // {
+    //     Log.Debug("Setting root redirect => API documentation");
+    //     app.MapGet("/", () => Results.Redirect("/scalar")).ExcludeFromDescription();
+    // }
+    // @init:end
 
     Log.Debug("Setting endpoints => MapControllers");
     app.MapControllers();
