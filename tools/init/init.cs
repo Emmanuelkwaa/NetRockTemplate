@@ -661,8 +661,10 @@ static class Conditions
 
 /// <summary>
 /// Processes <c>@init:if cond [uncomment]</c> / <c>@init:else</c> / <c>@init:end</c> marker lines.
-/// Marker lines are always removed. Inactive blocks are dropped. Active blocks flagged
-/// <c>uncomment</c> lose one leading comment prefix (<c>// </c>, <c># </c>) per line.
+/// Marker lines are always removed. Inactive branches are dropped. A branch flagged
+/// <c>uncomment</c> (<c>@init:if cond uncomment</c> or <c>@init:else uncomment</c>) loses one
+/// leading comment prefix (<c>// </c>, <c># </c>, <c>&lt;!-- --&gt;</c>) per line, so the template
+/// can carry code for other variants without compiling it.
 /// </summary>
 static class Markers
 {
@@ -704,16 +706,17 @@ static class Markers
             switch (match.Groups[1].Value)
             {
                 case "if":
-                    var uncomment = argsText.EndsWith(" uncomment", StringComparison.Ordinal);
-                    var condition = uncomment ? argsText[..^" uncomment".Length] : argsText;
+                    var uncomment = argsText == "uncomment" || argsText.EndsWith(" uncomment", StringComparison.Ordinal);
+                    var condition = uncomment ? argsText[..^"uncomment".Length].Trim() : argsText;
                     var active = Conditions.Matches(condition, options);
-                    stack.Push(new Block(active, uncomment && active, uncomment, false));
+                    stack.Push(new Block(active, uncomment, false));
                     break;
                 case "else":
                     if (stack.Count == 0) throw new InitException($"line {i + 1}: @init:else without @init:if");
                     var top = stack.Pop();
                     if (top.SeenElse) throw new InitException($"line {i + 1}: duplicate @init:else");
-                    stack.Push(new Block(!top.Active, top.UncommentFlag && !top.Active, top.UncommentFlag, true));
+                    if (argsText is not ("" or "uncomment")) throw new InitException($"line {i + 1}: @init:else takes no condition");
+                    stack.Push(new Block(!top.Active, argsText == "uncomment", true));
                     break;
                 case "end":
                     if (stack.Count == 0) throw new InitException($"line {i + 1}: @init:end without @init:if");
@@ -735,7 +738,7 @@ static class Markers
         return match.Success ? match.Groups[1].Value + match.Groups[3].Value : line;
     }
 
-    private sealed record Block(bool Active, bool Uncomment, bool UncommentFlag, bool SeenElse);
+    private sealed record Block(bool Active, bool Uncomment, bool SeenElse);
 }
 
 static class Glob
