@@ -25,6 +25,7 @@ export function createApiClient(
 	return client;
 }
 
+// @init:if auth=jwt,keycloak
 /**
  * Singleton client for browser-side usage.
  *
@@ -32,7 +33,16 @@ export function createApiClient(
  * via {@link initBrowserAuth} in `onMount`. For server-side usage
  * (load functions), call `createApiClient(fetch, url.origin)` instead.
  */
+// @init:else uncomment
+// /**
+//  * Singleton client for browser-side usage.
+//  *
+//  * For server-side usage (load functions), call
+//  * `createApiClient(fetch, url.origin)` instead.
+//  */
+// @init:end
 export const browserClient = createApiClient();
+// @init:if auth=jwt,keycloak
 
 /**
  * Registers auth middleware on the browser client exactly once.
@@ -45,3 +55,4 @@ export function initBrowserAuth(middleware: Middleware): void {
 	browserClient.use(middleware);
 	authInitialized = true;
 }
+// @init:end

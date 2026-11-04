@@ -35,7 +35,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 
 		event.locals.locale = locale;
+		// @init:if auth=jwt,keycloak
 		event.locals.user = null;
+		// @init:end
 
 		const response = await resolve(event, {
 			transformPageChunk: ({ html }) => html.replace('%lang%', locale)

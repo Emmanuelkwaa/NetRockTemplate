@@ -22,10 +22,14 @@ const MOCK_USER = {
 	username: 'test@example.com',
 	email: 'test@example.com',
 	firstName: 'Test',
+	// @init:if auth=jwt
 	lastName: 'User',
 	roles: ['User'],
 	permissions: [],
 	emailConfirmed: true
+	// @init:else uncomment
+	// lastName: 'User'
+	// @init:end
 };
 
 describe('getUser', () => {

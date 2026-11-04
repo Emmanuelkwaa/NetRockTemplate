@@ -2,10 +2,15 @@
 	import { SidebarTrigger } from '$lib/components/ui/sidebar';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Button } from '$lib/components/ui/button';
+	// @init:if auth=jwt,keycloak
 	import { LanguageSelector, ThemeToggle, UserNav } from '$lib/components/layout';
+	// @init:else uncomment
+	// import { LanguageSelector, ThemeToggle } from '$lib/components/layout';
+	// @init:end
 	import { shortcutsState } from '$lib/state/shortcuts.svelte';
 	import { Search, CircleHelp } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
+	// @init:if auth=jwt,keycloak
 	import type { User } from '$lib/types';
 
 	interface Props {
@@ -13,6 +18,7 @@
 	}
 
 	let { user }: Props = $props();
+	// @init:end
 </script>
 
 <header
@@ -42,8 +48,10 @@
 		</Button>
 		<LanguageSelector />
 		<ThemeToggle />
+		<!-- @init:if auth=jwt,keycloak -->
 		{#if user}
 			<UserNav {user} />
 		{/if}
+		<!-- @init:end -->
 	</nav>
 </header>

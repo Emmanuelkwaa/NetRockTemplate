@@ -2,11 +2,20 @@
 	import * as Command from '$lib/components/ui/command';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	// @init:if auth=jwt
 	import { hasPermission, Permissions } from '$lib/utils';
+	// @init:end
+	// @init:if auth=jwt,keycloak
 	import { shortcutsState, ShortcutAction, getShortcutSymbol } from '$lib/state/shortcuts.svelte';
+	// @init:else uncomment
+	// import { shortcutsState } from '$lib/state/shortcuts.svelte';
+	// @init:end
 	import { toggleTheme } from '$lib/state/theme.svelte';
+	// @init:if auth=jwt,keycloak
 	import { logout } from '$lib/auth';
+	// @init:end
 	import * as m from '$lib/paraglide/messages';
+	// @init:if auth=jwt
 	import {
 		LayoutDashboard,
 		User,
@@ -18,8 +27,16 @@
 		Sun,
 		LogOut
 	} from '@lucide/svelte';
+	// @init:else
+	// @init:if auth=keycloak uncomment
+	// import { LayoutDashboard, User, Sun, LogOut } from '@lucide/svelte';
+	// @init:else uncomment
+	// import { LayoutDashboard, Sun } from '@lucide/svelte';
+	// @init:end
+	// @init:end
 	import type { Component } from 'svelte';
 	import type { IconProps } from '@lucide/svelte';
+	// @init:if auth=jwt
 	import type { User as UserType } from '$lib/types';
 
 	interface Props {
@@ -27,6 +44,7 @@
 	}
 
 	let { user }: Props = $props();
+	// @init:end
 
 	type CommandItem = {
 		label: () => string;
@@ -35,7 +53,9 @@
 		shortcut?: string;
 	};
 
+	// @init:if auth=jwt
 	type AdminCommandItem = CommandItem & { permission: string };
+	// @init:end
 
 	function close() {
 		shortcutsState.isCommandPaletteOpen = false;
@@ -49,6 +69,7 @@
 				close();
 				goto(resolve('/'));
 			}
+			// @init:if auth=jwt,keycloak
 		},
 		{
 			label: m.profile_title,
@@ -57,6 +78,8 @@
 				close();
 				goto(resolve('/profile'));
 			}
+			// @init:end
+			// @init:if auth=jwt
 		},
 		{
 			label: m.nav_settings,
@@ -66,9 +89,11 @@
 				goto(resolve('/settings'));
 			},
 			shortcut: getShortcutSymbol(ShortcutAction.Settings)
+			// @init:end
 		}
 	];
 
+	// @init:if auth=jwt
 	const adminItems: AdminCommandItem[] = [
 		{
 			label: m.nav_adminUsers,
@@ -107,6 +132,7 @@
 			permission: Permissions.OAuthProviders.View
 		}
 	];
+	// @init:end
 
 	const actionItems: CommandItem[] = [
 		{
@@ -116,6 +142,7 @@
 				toggleTheme();
 				close();
 			}
+			// @init:if auth=jwt,keycloak
 		},
 		{
 			label: m.nav_logout,
@@ -125,12 +152,15 @@
 				logout();
 			},
 			shortcut: getShortcutSymbol(ShortcutAction.Logout)
+			// @init:end
 		}
 	];
+	// @init:if auth=jwt
 
 	let visibleAdminItems = $derived(
 		adminItems.filter((item) => hasPermission(user, item.permission))
 	);
+	// @init:end
 </script>
 
 <Command.Dialog
@@ -154,6 +184,7 @@
 			{/each}
 		</Command.Group>
 
+		<!-- @init:if auth=jwt -->
 		{#if visibleAdminItems.length > 0}
 			<Command.Group heading={m.commandPalette_admin()}>
 				{#each visibleAdminItems as item (item.label())}
@@ -164,6 +195,7 @@
 				{/each}
 			</Command.Group>
 		{/if}
+		<!-- @init:end -->
 
 		<Command.Separator />
 

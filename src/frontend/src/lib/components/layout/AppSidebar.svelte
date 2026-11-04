@@ -2,6 +2,7 @@
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	// @init:if auth=jwt
 	import { hasPermission, Permissions } from '$lib/utils';
 	import {
 		LayoutDashboard,
@@ -14,10 +15,18 @@
 		Search,
 		type IconProps
 	} from '@lucide/svelte';
+	// @init:else uncomment
+	// import { LayoutDashboard, Package2, CircleHelp, Search, type IconProps } from '@lucide/svelte';
+	// @init:end
 	import * as m from '$lib/paraglide/messages';
+	// @init:if auth=jwt,keycloak
 	import { ThemeToggle, LanguageSelector, UserNav } from '$lib/components/layout';
+	// @init:else uncomment
+	// import { ThemeToggle, LanguageSelector } from '$lib/components/layout';
+	// @init:end
 	import { shortcutsState, ShortcutAction, getShortcutSymbol } from '$lib/state/shortcuts.svelte';
 	import type { Component } from 'svelte';
+	// @init:if auth=jwt,keycloak
 	import type { User } from '$lib/types';
 
 	interface Props {
@@ -25,12 +34,15 @@
 	}
 
 	let { user }: Props = $props();
+	// @init:end
 
 	const sidebar = Sidebar.useSidebar();
 	let collapsed = $derived(sidebar.state === 'collapsed');
 
 	type NavItem = { title: () => string; href: string; icon: Component<IconProps> };
+	// @init:if auth=jwt
 	type AdminNavItem = NavItem & { permission: string };
+	// @init:end
 
 	const items: NavItem[] = [
 		{
@@ -40,6 +52,7 @@
 		}
 	];
 
+	// @init:if auth=jwt
 	const adminItems: AdminNavItem[] = [
 		{
 			title: m.nav_adminUsers,
@@ -70,6 +83,7 @@
 	let visibleAdminItems = $derived(
 		adminItems.filter((item) => hasPermission(user, item.permission))
 	);
+	// @init:end
 
 	function isActive(href: string): boolean {
 		const pathname = page.url.pathname;
@@ -154,6 +168,7 @@
 				</Sidebar.Menu>
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
+		<!-- @init:if auth=jwt -->
 		{#if visibleAdminItems.length > 0}
 			<Sidebar.Group>
 				<Sidebar.GroupLabel>{m.nav_admin()}</Sidebar.GroupLabel>
@@ -180,6 +195,7 @@
 				</Sidebar.GroupContent>
 			</Sidebar.Group>
 		{/if}
+		<!-- @init:end -->
 	</Sidebar.Content>
 	<Sidebar.Footer class="pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]">
 		{#if !sidebar.isMobile}
@@ -187,9 +203,11 @@
 				<LanguageSelector />
 				<ThemeToggle {collapsed} />
 				<div class="flex-1 group-data-[collapsible=icon]:hidden"></div>
+				<!-- @init:if auth=jwt,keycloak -->
 				{#if user}
 					<UserNav {user} />
 				{/if}
+				<!-- @init:end -->
 			</div>
 			<Sidebar.Separator />
 			<Sidebar.Menu>

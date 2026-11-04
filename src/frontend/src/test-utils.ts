@@ -1,10 +1,11 @@
 /**
  * Shared test utilities for SvelteKit server load function tests.
  *
- * Provides a mock user constant and a factory for building mock ServerLoadEvent
+ * Provides shared fixtures and a factory for building mock ServerLoadEvent
  * objects, eliminating duplication across route-level test files.
  */
 import { vi } from 'vitest';
+// @init:if auth=jwt,keycloak
 
 /** A realistic user object matching the shape returned by getUser(). */
 export const MOCK_USER = {
@@ -12,11 +13,16 @@ export const MOCK_USER = {
 	username: 'test@example.com',
 	email: 'test@example.com',
 	firstName: 'Test',
+	// @init:if auth=jwt
 	lastName: 'User',
 	roles: ['User'],
 	permissions: [],
 	emailConfirmed: true
+	// @init:else uncomment
+	// lastName: 'User'
+	// @init:end
 } as const;
+// @init:end
 
 /**
  * Default stubs for ServerLoadEvent properties that most load functions ignore.
@@ -28,7 +34,11 @@ export const MOCK_USER = {
 const EVENT_DEFAULTS = {
 	fetch: vi.fn() as typeof fetch,
 	getClientAddress: () => '127.0.0.1',
+	// @init:if auth=jwt,keycloak
 	locals: { user: null, locale: 'en' },
+	// @init:else uncomment
+	// locals: { locale: 'en' },
+	// @init:end
 	params: {},
 	platform: undefined,
 	request: new Request('http://localhost'),

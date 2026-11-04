@@ -4,5 +4,7 @@ export { default as ContentHeader } from './ContentHeader.svelte';
 export { default as Header } from './Header.svelte';
 export { default as LanguageSelector } from './LanguageSelector.svelte';
 export { default as ThemeToggle } from './ThemeToggle.svelte';
+// @init:if auth=jwt,keycloak
 export { default as UserNav } from './UserNav.svelte';
+// @init:end
 export { default as ShortcutsHelp } from './ShortcutsHelp.svelte';

@@ -1,6 +1,7 @@
 export { getUser, logout } from './auth';
 export type { GetUserResult } from './auth';
 export { createAuthMiddleware } from './middleware';
+// @init:if auth=jwt
 
 /**
  * Must match the backend CookieNames.RefreshToken constant.
@@ -11,3 +12,4 @@ export { createAuthMiddleware } from './middleware';
  * degrades gracefully - users get a clean `/login` instead of "session expired."
  */
 export const REFRESH_TOKEN_COOKIE = '__Secure-REFRESH-TOKEN';
+// @init:end
