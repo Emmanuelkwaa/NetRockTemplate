@@ -33,6 +33,7 @@ Pre-create the bucket in your provider's console. Restart - no rebuild needed.
 
 ## Remove File Storage Entirely
 
+<!-- @init:if auth=jwt -->
 1. **Infrastructure:** Remove the MinIO resource from `NetRockTemplate.AppHost/Program.cs`
 2. **Backend:** Remove `Application/Features/FileStorage/`, `Application/Features/Avatar/`, `Infrastructure/Features/FileStorage/`, `Infrastructure/Features/Avatar/`
 3. **Entity:** Remove `HasAvatar` from `ApplicationUser`
@@ -43,3 +44,11 @@ Pre-create the bucket in your provider's console. Restart - no rebuild needed.
 8. **Frontend:** Remove `AvatarDialog.svelte`, update `ProfileHeader.svelte` and `UserNav.svelte` to remove avatar image
 9. **Config:** Remove `FileStorage` section from all `appsettings*.json`
 10. **Health check:** Remove S3 health check from `HealthCheckExtensions.cs`
+<!-- @init:else -->
+1. **Infrastructure:** Remove the MinIO resource from `NetRockTemplate.AppHost/Program.cs`
+2. **Backend:** Remove `Application/Features/FileStorage/` and `Infrastructure/Features/FileStorage/`
+3. **DI:** Remove `AddFileStorageServices()` from `Program.cs`
+4. **NuGet:** Remove `AWSSDK.S3` from `Directory.Packages.props`
+5. **Config:** Remove `FileStorage` section from all `appsettings*.json`
+6. **Health check:** Remove S3 health check from `HealthCheckExtensions.cs`
+<!-- @init:end -->

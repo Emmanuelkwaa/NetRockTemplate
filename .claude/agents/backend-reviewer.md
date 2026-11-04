@@ -21,7 +21,11 @@ All layers reference Shared (Result, ErrorType, ErrorMessages)
 - **Shared**: `Result`/`Result<T>`, `ErrorType`, `ErrorMessages`. Zero deps.
 - **Domain**: Entities (`BaseEntity`). Zero deps.
 - **Application**: Interfaces, DTOs (Input/Output), service contracts.
+<!-- @init:if auth=jwt -->
 - **Infrastructure**: EF Core, Identity, services. All implementations `internal`.
+<!-- @init:else -->
+- **Infrastructure**: EF Core, services. All implementations `internal`.
+<!-- @init:end -->
 - **WebApi**: Controllers, middleware, validation, request/response DTOs.
 
 ## What to Check
@@ -35,8 +39,18 @@ All layers reference Shared (Result, ErrorType, ErrorMessages)
 ### Security
 - Inputs validated on backend (FluentValidation)
 - No PII in error messages, logs, or URLs
+<!-- @init:if auth=jwt -->
 - Auth + CSRF on mutations
 - `[RequirePermission]` on protected actions
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+- Auth + CSRF on mutations
+- `[Authorize]` (via `ApiController`) on every endpoint that needs a user
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+- CSRF (Origin validation) on mutations
+- No endpoint exposes data or operations that need an identity (there is no authentication)
+<!-- @init:end -->
 - No information leakage in responses
 
 ### Conventions
@@ -60,8 +74,13 @@ All layers reference Shared (Result, ErrorType, ErrorMessages)
 
 ### Testing
 - New behavior has tests (unit, component, API, or validator as appropriate)
+<!-- @init:if auth=jwt -->
 - API tests use `TestAuth` helpers, not manual header setup
 - Response contract assertions for 200/201 responses
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+- API tests authenticate with `TestIssuer.CreateToken()` bearer tokens, not hand-built claims
+<!-- @init:end -->
 
 ### Code Quality
 - No dead code (unused imports, variables, functions)

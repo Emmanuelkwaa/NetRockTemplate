@@ -7,12 +7,16 @@
 /// <returns>{ReturnDescription}</returns>
 /// <response code="200">Returns the {entity}</response>
 /// <response code="400">If the request is invalid</response>
+<!-- @init:if auth=jwt,keycloak -->
 /// <response code="401">If the user is not authenticated</response>
+<!-- @init:end -->
 /// <response code="404">If the {entity} was not found</response>
 [Http{Method}("{route}")]
 [ProducesResponseType(typeof({Response}), StatusCodes.Status200OK)]
 [ProducesResponseType(StatusCodes.Status400BadRequest)]
+<!-- @init:if auth=jwt,keycloak -->
 [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+<!-- @init:end -->
 [ProducesResponseType(StatusCodes.Status404NotFound)]
 public async Task<ActionResult<{Response}>> {ActionName}(
     {Parameters},
@@ -69,10 +73,12 @@ public async Task<IActionResult> Delete{Entity}(
 }
 ```
 
+<!-- @init:if auth=jwt -->
 **With permission:**
 ```csharp
 [RequirePermission(AppPermissions.Feature.Action)]
 ```
+<!-- @init:end -->
 
 ## Rules
 

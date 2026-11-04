@@ -25,7 +25,9 @@ For service business logic with mocked dependencies.
    private readonly IOrderRepository _orderRepo = Substitute.For<IOrderRepository>();
    private readonly HybridCache _cache = Substitute.For<HybridCache>();
    ```
+<!-- @init:if auth=jwt -->
 3. For Identity: `IdentityMockHelpers.CreateMockUserManager()` / `CreateMockRoleManager()`
+<!-- @init:end -->
 4. Assert on `Result`: `Assert.True(result.IsSuccess); Assert.Equal(expectedId, result.Value);`
 5. Verify: `dotnet test src/backend/tests/NetRockTemplate.Component.Tests -c Release`
 
@@ -48,6 +50,7 @@ For testing the full HTTP pipeline (routes, auth, validation, status codes).
        public void Dispose() => _client.Dispose();
    }
    ```
+<!-- @init:if auth=jwt -->
 3. Auth per-request via `Authorization` header:
    - `"Test"` - basic authenticated user
    - `TestAuth.WithPermissions(AppPermissions.Users.View)` - specific permissions
@@ -56,6 +59,16 @@ For testing the full HTTP pipeline (routes, auth, validation, status codes).
 4. Configure mock returns: `_factory.AdminService.Method(...).Returns(...);`
 5. If service interface not mocked in `CustomWebApplicationFactory`, add it there first
 6. For 200/201 responses, add **response contract assertions** using frozen records in `Contracts/ResponseContracts.cs`
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+3. Auth per-request: send `Authorization: Bearer {TestIssuer.CreateToken()}` for an authenticated user; no header for unauthenticated (401). `TestIssuer.CreateToken(...)` parameters produce invalid tokens (wrong audience, issuer, expiry) for negative tests
+4. Configure mock returns: `_factory.KeycloakAuthService.Method(...).Returns(...);`
+5. If service interface not mocked in `CustomWebApplicationFactory`, add it there first
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+3. Configure mock returns on services exposed by `CustomWebApplicationFactory` (for example `_factory.EmailService`)
+4. If service interface not mocked in `CustomWebApplicationFactory`, add it there first
+<!-- @init:end -->
 7. Verify: `dotnet test src/backend/tests/NetRockTemplate.Api.Tests -c Release`
 
 ## Validator Test

@@ -8,7 +8,11 @@ Each email has a 3-file pattern plus a model record.
 
 ## Steps
 
+<!-- @init:if auth=jwt -->
 **1. Create the model record** in `src/backend/NetRockTemplate.Application/Features/Email/Models/EmailTemplateModels.cs`:
+<!-- @init:else -->
+**1. Create the model record** in `src/backend/NetRockTemplate.Application/Features/Email/Models/EmailTemplateModels.cs` (create the file with the first template, namespace `NetRockTemplate.Application.Features.Email.Models`):
+<!-- @init:end -->
 
 ```csharp
 /// <summary>
@@ -31,7 +35,11 @@ Properties auto-map to snake_case Liquid variables (`OrderNumber` -> `order_numb
 
 All marked as **EmbeddedResource** (verify `.csproj` has `<EmbeddedResource Include="Features\Email\Templates\*.liquid" />`).
 
+<!-- @init:if auth=jwt -->
 **3. Register the model type** in `FluidEmailTemplateRenderer.CreateOptions()`:
+<!-- @init:else -->
+**3. Register the model type** in `FluidEmailTemplateRenderer.CreateOptions()` (add `using NetRockTemplate.Application.Features.Email.Models;` with the first model):
+<!-- @init:end -->
 
 ```csharp
 options.MemberAccessStrategy.Register<OrderConfirmationModel>();
@@ -45,7 +53,11 @@ await templatedEmailSender.SendSafeAsync("order-confirmation",
     customer.Email, cancellationToken);
 ```
 
+<!-- @init:if auth=jwt -->
 **5. Add tests** in `FluidEmailTemplateRendererTests.cs` - test subject rendering, HTML variable injection, and plain text variant.
+<!-- @init:else -->
+**5. Add tests** in `src/backend/tests/NetRockTemplate.Component.Tests/Services/FluidEmailTemplateRendererTests.cs` (create it with the first template) - test subject rendering, HTML variable injection, and plain text variant.
+<!-- @init:end -->
 
 **6. Verify:** `dotnet test src/backend/NetRockTemplate.slnx -c Release`
 

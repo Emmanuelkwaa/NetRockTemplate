@@ -4,6 +4,7 @@
 
 NETrock is built **security-first**. Every decision defaults to the most restrictive option, then selectively opens what's needed.
 
+<!-- @init:if auth=jwt -->
 ## Authentication & Session Security
 
 - **JWT in HttpOnly cookies** - tokens never touch JavaScript, immune to XSS theft
@@ -36,7 +37,9 @@ NETrock is built **security-first**. Every decision defaults to the most restric
 - **Role hierarchy protection** - Superuser > Admin > User, with privilege escalation prevention (can't assign roles at or above your own rank, can't grant permissions you don't have)
 - **Self-protection rules** - can't lock your own account, can't delete yourself, can't remove your own roles
 - **System role guards** - Superuser/Admin/User cannot be deleted or renamed, Superuser permissions are implicit (never stored in DB)
+<!-- @init:if frontend=yes -->
 - **Frontend mirrors backend** - route guards, nav filtering, and conditional rendering use the same permission claims, but the backend is always authoritative
+<!-- @init:end -->
 
 ## PII Compliance
 
@@ -44,24 +47,77 @@ NETrock is built **security-first**. Every decision defaults to the most restric
 - **Server-side masking** - PII is masked at the API layer, not the frontend. `j***@g***.com` for emails, `***` for phone numbers. No PII leaks through the API regardless of client
 - **Self-view exemption** - users can always see their own data
 - **No PII in logs, URLs, or errors** - email addresses, tokens, and personal data are never included in log output, URL parameters, or error responses
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+## Authentication & Session Security
+
+- **Keycloak is the identity provider** - passwords, multi-factor authentication, account recovery, and user and role management live on your Keycloak server, not in this project. Setup: [Keycloak](keycloak.md)
+- **Strict token validation** - access tokens are checked for signature (realm signing keys from discovery metadata), exact issuer, audience, and lifetime. HTTPS metadata is required outside Development
+- **Authorization code flow with PKCE** - the state value and PKCE verifier travel in a short-lived, data-protected HttpOnly cookie, the state is compared in constant time on callback, and the return URL must be a local path
+- **Tokens in HttpOnly cookies** - after sign-in the API sets the access and refresh tokens as HttpOnly cookies, so they never touch JavaScript. Non-browser clients can send Keycloak bearer tokens directly
+- **Refresh and logout through Keycloak** - `POST /api/auth/refresh` rotates the tokens with Keycloak; `POST /api/auth/logout` ends the Keycloak session and clears the cookies
+- **Deny by default** - every `ApiController` endpoint requires an authenticated caller
+
+## Personal Data
+
+- **No PII in logs, URLs, or errors** - email addresses, tokens, and personal data are never included in log output, URL parameters, or error responses
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+## Access Model
+
+- **No authentication** - the API has no users and no sign-in. Every endpoint is anonymous, so do not expose data or operations that need an identity until you add authentication
+- **No PII in logs, URLs, or errors** - personal data is never included in log output, URL parameters, or error responses
+<!-- @init:end -->
 
 ## Transport & Headers
 
 - **CORS production safeguard** - startup guard rejects `AllowAllOrigins` in non-development environments
+<!-- @init:if frontend=yes -->
+<!-- @init:if auth=jwt -->
 - **CSP with nonce mode** - script-src locked down, Turnstile CAPTCHA whitelisted explicitly
+<!-- @init:else -->
+- **CSP with nonce mode** - script-src locked down
+<!-- @init:end -->
+<!-- @init:end -->
 - **Security headers on every response** - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, HSTS in production
+<!-- @init:if frontend=yes -->
 - **CSRF protection** - Origin header validation in the SvelteKit API proxy for all state-changing requests
+<!-- @init:else -->
+- **CSRF protection** - `OriginValidationMiddleware` validates the Origin header on all state-changing requests
+<!-- @init:end -->
 
 ## Rate Limiting & Input Validation
 
+<!-- @init:if auth=jwt -->
 - **Rate limiting** - global + per-endpoint policies (registration has stricter limits), configurable per environment, with IP and user partitioning
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+- **Rate limiting** - global limiter plus a stricter IP-partitioned policy on the auth endpoints, configurable per environment
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+- **Rate limiting** - global limiter partitioned by client IP, configurable per environment
+<!-- @init:end -->
+<!-- @init:if frontend=yes -->
 - **Visible feedback** - rate-limited actions show countdown timers ("Wait Xs") instead of silently failing
+<!-- @init:end -->
 - **Input validation everywhere** - FluentValidation on backend (even if frontend already validates), Data Annotations flowing into OpenAPI spec
 
+<!-- @init:if auth=jwt -->
 ## Data Protection & Audit
 
 - **Full audit trail** - append-only `AuditEvents` table with JSONB metadata, 25+ action constants covering login, registration, password changes, role modifications, OAuth connections, 2FA changes, and admin actions
 - **Soft delete** - nothing is ever truly gone, every mutation tracked with who/when audit fields (`CreatedAt/By`, `UpdatedAt/By`, `DeletedAt/By`)
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+## Data Protection
+
+- **Soft delete** - nothing is ever truly gone, every mutation tracked with who/when audit fields (`CreatedAt/By`, `UpdatedAt/By`, `DeletedAt/By`), where "who" is the Keycloak user ID
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+## Data Protection
+
+- **Soft delete** - nothing is ever truly gone, every mutation tracked with timestamps (`CreatedAt`, `UpdatedAt`, `DeletedAt`)
+<!-- @init:end -->
 - **Dev config stripping** - `appsettings.Development.json` and `appsettings.Testing.json` excluded from production Docker images
 
 ## Reporting a Vulnerability

@@ -53,7 +53,11 @@ Backend layers: WebApi → Application ← Infrastructure → Domain + Shared
 <!-- @init:end -->
 ### Cross-Cutting
 
+<!-- @init:if auth=jwt -->
 - Security first - when convenience and security conflict, choose security. Deny by default, open selectively. Full PII compliance (`users.view_pii` permission, server-side masking, no PII in logs/URLs/errors).
+<!-- @init:else -->
+- Security first - when convenience and security conflict, choose security. Deny by default, open selectively. No PII in logs, URLs, or errors.
+<!-- @init:end -->
 - Atomic commits: `type(scope): imperative description` (Conventional Commits). No `Co-Authored-By` lines.
 - No dead code - remove unused imports, variables, functions, files, and stale references in the same commit
 - No em dashes - never use `—` anywhere (code, comments, docs, UI). Use `-` or rewrite the sentence.
@@ -128,7 +132,15 @@ Delegate to the right agent for the task. Run reviewers in parallel when reviewi
 | `frontend-reviewer` | Audits Svelte code (read-only) | Reviewing frontend changes |
 | `ux-designer` | Audits UI/UX design quality (read-only) | Checking responsiveness, visual consistency, theming |
 <!-- @init:end -->
+<!-- @init:if auth=jwt -->
 | `security-reviewer` | Audits for vulnerabilities (read-only) | Auth, permissions, PII, tokens, middleware changes |
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+| `security-reviewer` | Audits for vulnerabilities (read-only) | Auth, tokens, cookies, middleware changes |
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+| `security-reviewer` | Audits for vulnerabilities (read-only) | Middleware, CORS, headers, input handling changes |
+<!-- @init:end -->
 | `devops-reviewer` | Audits infra/deployment (read-only) | Dockerfiles, compose, Aspire, CI/CD changes |
 | `test-writer` | Writes tests | Tests needed alongside implementation |
 | `filemap-checker` | Verifies downstream updates (read-only) | After modifying files with known consumers |

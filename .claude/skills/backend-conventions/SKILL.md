@@ -13,9 +13,18 @@ src/backend/
 ├── NetRockTemplate.Domain/Entities/     # Business entities (BaseEntity)
 ├── NetRockTemplate.Application/         # Interfaces, DTOs, service contracts
 │   ├── Features/{Feature}/I{Feature}Service.cs
+<!-- @init:if auth=jwt -->
 │   ├── Features/{Feature}/Dtos/{Operation}Input.cs, {Entity}Output.cs
 │   ├── Identity/IUserService.cs, IUserContext.cs
 │   └── Identity/Constants/AppRoles.cs, AppPermissions.cs
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+│   ├── Features/{Feature}/Dtos/{Operation}Input.cs, {Entity}Output.cs
+│   └── Identity/IUserContext.cs
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+│   └── Features/{Feature}/Dtos/{Operation}Input.cs, {Entity}Output.cs
+<!-- @init:end -->
 ├── NetRockTemplate.Infrastructure/      # Implementations (all internal)
 │   ├── Features/{Feature}/Services/, Configurations/, Extensions/
 │   └── Persistence/NetRockTemplateDbContext.cs
@@ -24,7 +33,9 @@ src/backend/
 └── NetRockTemplate.WebApi/              # Entry point
     ├── Features/{Feature}/{Feature}Controller.cs, {Feature}Mapper.cs
     ├── Features/{Feature}/Dtos/{Operation}/{Operation}Request.cs + Validator
+<!-- @init:if auth=jwt -->
     ├── Authorization/             # RequirePermission, PermissionPolicyProvider
+<!-- @init:end -->
     └── Shared/                    # ApiController, ProblemFactory, ValidationConstants
 ```
 
@@ -56,6 +67,7 @@ Rules:
 - Boolean naming: `Is*`/`Has*` in C#, prefix-free column names via `HasColumnName`
 - Soft delete via `entity.SoftDelete()` / `entity.Restore()` - never set `IsDeleted` directly
 
+<!-- @init:if auth=jwt -->
 ## Audit Trail
 
 `AuditEvent` is append-only, does NOT extend `BaseEntity`. No FK on `UserId` (users are hard-deleted). Fire-and-forget logging - failures never break operations.
@@ -68,13 +80,19 @@ await auditService.LogAsync(AuditActions.AdminAssignRole, userId: callerId,
 
 Always serialize metadata with `JsonSerializer.Serialize` - never string interpolation (JSON injection risk).
 
+<!-- @init:end -->
 ## EF Core
 
 Configurations inherit `BaseEntityConfiguration<T>` (`public abstract`), override `ConfigureEntity`. Mark derived configurations `internal`. Auto-discovered via `ApplyConfigurationsFromAssembly()`.
 
+<!-- @init:if auth=jwt -->
 - Default `public` schema. Named schemas only for existing grouped features (e.g., `"auth"`).
 - `.HasComment()` on all enum columns documenting values.
 - Seeding: roles via `AppRoles.All` (reflection), permissions via `SeedRolePermissionsAsync()`.
+<!-- @init:else -->
+- Default `public` schema. Named schemas only for existing grouped features (e.g., `"hangfire"`).
+- `.HasComment()` on all enum columns documenting values.
+<!-- @init:end -->
 
 Migration command:
 ```bash
@@ -91,18 +109,28 @@ dotnet ef migrations add {Name} \
 return Result<Guid>.Success(entity.Id);
 
 // Static message - prefer ErrorMessages constants
+<!-- @init:if auth=jwt -->
 return Result.Failure(ErrorMessages.Admin.UserNotFound, ErrorType.NotFound);
 
 // Runtime values go in server-side logs, never in client responses
 logger.LogWarning("Operation failed for user '{UserId}': {Errors}", userId, errors);
 return Result.Failure(ErrorMessages.Admin.DeleteFailed);
+<!-- @init:else -->
+return Result.Failure(ErrorMessages.Orders.NotFound, ErrorType.NotFound);
+
+// Runtime values go in server-side logs, never in client responses
+logger.LogWarning("Operation failed for order '{OrderId}': {Errors}", orderId, errors);
+return Result.Failure(ErrorMessages.Orders.DeleteFailed);
+<!-- @init:end -->
 ```
 
 | ErrorType | HTTP | When |
 |---|---|---|
 | *(omit - default)* | 400 | Validation / business rule failures |
+<!-- @init:if auth=jwt,keycloak -->
 | `ErrorType.Unauthorized` | 401 | Auth / token failures |
 | `ErrorType.Forbidden` | 403 | Authenticated but insufficient privileges |
+<!-- @init:end -->
 | `ErrorType.NotFound` | 404 | Entity not found |
 
 Controller: `ProblemFactory.Create(result.Error, result.ErrorType)` for failures.
@@ -117,10 +145,17 @@ Controller: `ProblemFactory.Create(result.Error, result.ErrorType)` for failures
 
 | Layer | Pattern | Example |
 |---|---|---|
+<!-- @init:if auth=jwt -->
 | WebApi Request | `{Operation}Request` | `LoginRequest` |
 | WebApi Response | `{Entity}Response` | `UserResponse` |
 | Application Input | `{Operation}Input` | `RegisterInput` |
 | Application Output | `{Entity}Output` | `UserOutput` |
+<!-- @init:else -->
+| WebApi Request | `{Operation}Request` | `CreateOrderRequest` |
+| WebApi Response | `{Entity}Response` | `OrderResponse` |
+| Application Input | `{Operation}Input` | `CreateOrderInput` |
+| Application Output | `{Entity}Output` | `OrderOutput` |
+<!-- @init:end -->
 
 Mappers: `internal static class {Feature}Mapper` with extension methods (`request.ToInput()`, `output.ToResponse()`).
 
@@ -128,8 +163,12 @@ WebApi response DTOs: classes with `init` properties and `[UsedImplicitly]` from
 
 ## Controller Conventions
 
+<!-- @init:if auth=jwt,keycloak -->
 - Authenticated endpoints extend `ApiController` (`[Authorize]`, route `api/v1/[controller]`)
 - Public endpoints use `ControllerBase` directly (route `api/[controller]`)
+<!-- @init:else -->
+- Endpoints extend `ApiController` (route `api/v1/[controller]`). There is no authentication - every endpoint is anonymous
+<!-- @init:end -->
 - Include `/// <summary>`, `[ProducesResponseType]` per status code, and `CancellationToken` as last param
 - Never `/// <param name="cancellationToken">` - it leaks into OAS `requestBody.description`
 - File uploads: `[FromForm]` with `IFormFile`, `[Consumes("multipart/form-data")]`, `[RequestSizeLimit(bytes)]`
@@ -143,8 +182,10 @@ FluentValidation auto-discovered from WebApi assembly. Co-locate validators with
 
 | Rule Type | Convention |
 |---|---|
+<!-- @init:if auth=jwt -->
 | New passwords | `MinimumLength(6)` + lowercase + uppercase + digit rules |
 | Existing passwords | `NotEmpty()` + `MaximumLength(255)` only |
+<!-- @init:end -->
 | Optional fields | `.When(x => !string.IsNullOrEmpty(x.Field))` |
 | URL fields | `Uri.TryCreate` + restrict to `http`/`https` schemes |
 | Shared patterns | Extract to `ValidationConstants.cs` |
@@ -153,10 +194,13 @@ FluentValidation auto-discovered from WebApi assembly. Co-locate validators with
 
 - Client-facing messages are centralized as `const string` in `ErrorMessages.cs` nested classes
 - Runtime values (role names, user IDs, framework errors): log server-side via `ILogger`, never in `Result.Failure()`
+<!-- @init:if auth=jwt -->
 - Identity errors: log `.Description` server-side, return a static `ErrorMessages` constant to the client
 - Exception: password validation errors (registration, change, reset) are forwarded as-is
+<!-- @init:end -->
 - To add: create `const string` in `ErrorMessages.cs` nested class. Dynamic values go in logs, not in Result.
 
+<!-- @init:if auth=jwt -->
 ## Authorization
 
 ### Permission System
@@ -176,6 +220,12 @@ Atomic permissions via `[RequirePermission("permission.name")]` on controller ac
 - Cannot modify your own roles, lock yourself, or delete yourself
 
 Permission changes on a role -> invalidate refresh tokens + rotate security stamps + clear cache for all affected users.
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+## Authentication
+
+Keycloak is the identity provider (setup: `docs/keycloak.md`). The API validates Keycloak access tokens from the `Authorization: Bearer` header or the access token cookie. `IUserContext` reads the caller from token claims (`sub` as a GUID, `email`, `preferred_username`). `[Authorize]` comes from `ApiController`; there are no roles or permissions in this project - add policies for your own features when needed.
+<!-- @init:end -->
 
 ## Repository Pattern
 
@@ -187,7 +237,11 @@ Pagination: `Paginate(int pageNumber, int pageSize)` extension on `IQueryable<T>
 
 ## Caching
 
+<!-- @init:if auth=jwt -->
 `HybridCache` (.NET built-in) provides L1 in-process caching with stampede protection. Keys defined in `CacheKeys` constants. `UserCacheInvalidationInterceptor` auto-clears user cache on entity changes.
+<!-- @init:else -->
+`HybridCache` (.NET built-in) provides L1 in-process caching with stampede protection. Keep cache keys in a constants class rather than inline strings.
+<!-- @init:end -->
 
 ## File Storage
 
@@ -199,7 +253,11 @@ Pagination: `Paginate(int pageNumber, int pageSize)` extension on `IQueryable<T>
 3. Pass to the service for validation/processing
 4. Store via `fileStorageService.UploadAsync(key, data, contentType, ct)` - returns `Result`
 
+<!-- @init:if auth=jwt -->
 **Storage keys:** Use `{feature}/{id}.{ext}` pattern (e.g., `avatars/{userId}.webp`).
+<!-- @init:else -->
+**Storage keys:** Use `{feature}/{id}.{ext}` pattern (e.g., `invoices/{invoiceId}.pdf`).
+<!-- @init:end -->
 
 ## Email Templates
 
@@ -232,6 +290,7 @@ Register with `BindConfiguration`, `ValidateDataAnnotations`, `ValidateOnStart`.
 | Project | Tests | Dependencies |
 |---|---|---|
 | `Unit.Tests` | Pure logic (Shared, Domain, Application) | None - no mocks, no DI |
+<!-- @init:if auth=jwt -->
 | `Component.Tests` | Service business logic | `TestDbContextFactory` (InMemory), `NSubstitute`, `IdentityMockHelpers` |
 | `Api.Tests` | Full HTTP pipeline (routes, auth, status codes) | `CustomWebApplicationFactory`, `TestAuthHandler` |
 | `Architecture.Tests` | Layer deps, naming, visibility | NetArchTest |
@@ -239,6 +298,19 @@ Register with `BindConfiguration`, `ValidateDataAnnotations`, `ValidateOnStart`.
 API test auth: `"Authorization", "Test"` (basic user), `TestAuth.WithPermissions(...)` (specific perms), `TestAuth.Superuser()`.
 
 Response contracts: frozen records in `Contracts/ResponseContracts.cs` - deserialize and assert key fields.
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+| `Component.Tests` | Service business logic | `TestDbContextFactory` (InMemory), `NSubstitute` |
+| `Api.Tests` | Full HTTP pipeline (routes, auth, status codes) | `CustomWebApplicationFactory`, `TestIssuer` |
+| `Architecture.Tests` | Layer deps, naming, visibility | NetArchTest |
+
+API test auth: send `TestIssuer.CreateToken()` as a bearer token (or in the access token cookie). The factory validates tokens against the in-process `TestIssuer`, so no Keycloak server is needed.
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+| `Component.Tests` | Service business logic | `TestDbContextFactory` (InMemory), `NSubstitute` |
+| `Api.Tests` | Full HTTP pipeline (routes, status codes) | `CustomWebApplicationFactory` |
+| `Architecture.Tests` | Layer deps, naming, visibility | NetArchTest |
+<!-- @init:end -->
 
 ## Aspire (Local Development)
 

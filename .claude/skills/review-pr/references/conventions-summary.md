@@ -32,7 +32,11 @@
 - No emojis anywhere
 - Atomic commits: `type(scope): imperative description`
 - Security first - deny by default
+<!-- @init:if auth=jwt -->
 - PII compliance: `users.view_pii` permission, server-side masking
+<!-- @init:else -->
+- No PII in logs, URLs, or errors
+<!-- @init:end -->
 
 ## DTO Naming
 

@@ -21,6 +21,7 @@
 </div>
 ```
 
+<!-- @init:if auth=jwt -->
 ## With Permission Guard (+page.server.ts)
 
 ```typescript
@@ -45,6 +46,7 @@ export const load: PageServerLoad = async ({ parent, fetch, url }) => {
 	};
 };
 ```
+<!-- @init:end -->
 
 ## Component Template
 
