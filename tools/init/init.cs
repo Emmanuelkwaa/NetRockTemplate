@@ -646,13 +646,19 @@ static class NextSteps
     }
 }
 
-/// <summary>Evaluates option conditions such as <c>auth=jwt,keycloak frontend=yes</c> (all terms must match).</summary>
+/// <summary>
+/// Evaluates option conditions such as <c>auth=jwt,keycloak frontend=yes</c> (all terms must match).
+/// The term <c>template</c> is always false, for template-only content.
+/// </summary>
 static class Conditions
 {
     public static bool Matches(string condition, IReadOnlyDictionary<string, string> options)
     {
         foreach (var term in condition.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
+            // "template" marks content that only exists in the template, never in a generated project.
+            if (term == "template") return false;
+
             var negate = term.Contains("!=");
             var parts = term.Split(negate ? "!=" : "=", 2);
             if (parts.Length != 2 || !Cli.Choices.TryGetValue(parts[0], out var allowed))
