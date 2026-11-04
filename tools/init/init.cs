@@ -447,11 +447,12 @@ static class Generator
             (new Regex(TemplateName), s.Name!),
             (new Regex(TemplateSlug), s.Slug),
             (new Regex(TemplateName.ToLowerInvariant()), s.Name!.ToLowerInvariant()),
-            (new Regex(@"(?<!\d)13000(?!\d)"), s.Port!.Value.ToString()),
-            (new Regex(@"(?<!\d)13002(?!\d)"), s.ApiPort.ToString())
+            // Ports only after ':', whitespace or a quote, so digits inside hashes never match.
+            (new Regex(@"(?<=[:\s`""'])13000(?![0-9A-Za-z])"), s.Port!.Value.ToString()),
+            (new Regex(@"(?<=[:\s`""'])13002(?![0-9A-Za-z])"), s.ApiPort.ToString())
         };
 
-        foreach (var file in textFiles.Where(File.Exists))
+        foreach (var file in textFiles.Where(File.Exists).Where(f => !IsLockFile(f)))
         {
             var content = File.ReadAllText(file);
             var updated = replacements.Aggregate(content, (text, r) => r.Pattern.Replace(text, r.Value));
@@ -470,6 +471,9 @@ static class Generator
             else File.Move(path, renamed);
         }
     }
+
+    private static bool IsLockFile(string path) =>
+        Path.GetFileName(path) is "pnpm-lock.yaml" or "package-lock.json" or "yarn.lock" or "packages.lock.json";
 
     private static void ReplaceSecrets(string output, Manifest manifest)
     {
@@ -814,7 +818,8 @@ static class JsonEdits
     public static void Apply(string path, JsonEdit edit)
     {
         if (!File.Exists(path)) throw new InitException($"JSON edit target missing: {edit.File}");
-        var root = JsonNode.Parse(File.ReadAllText(path), documentOptions: new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip })
+        var text = File.ReadAllText(path);
+        var root = JsonNode.Parse(text, documentOptions: new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip })
                    ?? throw new InitException($"Empty JSON: {edit.File}");
 
         foreach (var pointer in edit.Remove)
@@ -829,7 +834,15 @@ static class JsonEdits
             parent![key] = value?.DeepClone();
         }
 
-        var json = root.ToJsonString(new JsonSerializerOptions { WriteIndented = true, IndentSize = 2, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+        // Keep the file's indentation style (the frontend's Prettier config uses tabs).
+        var tabs = Regex.IsMatch(text, "^\t", RegexOptions.Multiline);
+        var json = root.ToJsonString(new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            IndentCharacter = tabs ? '\t' : ' ',
+            IndentSize = tabs ? 1 : 2,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
         File.WriteAllText(path, json + "\n");
     }
 
