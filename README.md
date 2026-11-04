@@ -53,46 +53,76 @@ Every project starts the same way: authentication, role management, rate limitin
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+<!-- @init:if frontend=yes -->
 - [Node.js 22+](https://nodejs.org/) (run `corepack enable` for pnpm)
+<!-- @init:end -->
 - [Git](https://git-scm.com/)
+<!-- @init:if template -->
 
-### 1. Clone & Initialize
+### Create Your Project
 
 ```bash
-git clone https://github.com/fpindej/netrock.git my-saas
-cd my-saas
+git clone https://github.com/fpindej/netrock.git netrock
+cd netrock
+./init.sh            # macOS / Linux
+.\init.ps1           # Windows (PowerShell)
 ```
 
-**macOS / Linux:**
+Init asks for a name and base port, then the options below, and writes a new project into `../<Name>` (or `--output`). The template folder is never modified. Node.js is only needed with the frontend.
+
+| Option | Values | Default |
+|---|---|---|
+| `--auth` | `jwt` (built-in accounts, 2FA, OAuth, roles), `keycloak` (existing Keycloak server), `none` | `jwt` |
+| `--deploy` | `aspire` (Aspire generates production compose), `compose` (own `docker-compose.yaml`) | `aspire` |
+| `--database` | `managed` (PostgreSQL container), `external` (your server) | `managed` |
+| `--frontend` | `yes` (SvelteKit), `no` (API only) | `yes` |
+
+Other flags: `--name`, `--port`, `--output`, `--email` / `--password` (jwt superuser), `--keycloak-authority` / `--keycloak-client-id` / `--keycloak-client-secret`, `--yes`, `--no-migration`, `--no-commit`, `--no-aspire`. Run `./init.sh --help` for details.
+
 ```bash
-chmod +x init.sh
-./init.sh
+./init.sh --name MyApi --auth keycloak --frontend no --deploy compose --yes
 ```
 
-**Windows (PowerShell):**
-```powershell
-.\init.ps1
-```
+Maintainers: `tools/init/verify-matrix.sh` builds and checks every option combination.
+<!-- @init:end -->
 
-The init script will ask for your project name and base port, then rename everything and optionally create the initial migration.
-
-### 2. Launch Everything
+### Launch Everything
 
 ```bash
 dotnet run --project src/backend/NetRockTemplate.AppHost
 ```
 
-That's it. Aspire starts all infrastructure (PostgreSQL, MinIO) as containers and launches the API and frontend dev server. The Aspire Dashboard URL appears in the console - all service URLs (API docs, pgAdmin, MinIO) are linked from the Dashboard.
+<!-- @init:if frontend=yes -->
+That's it. Aspire starts the infrastructure (PostgreSQL, MinIO, MailPit) as containers and launches the API and frontend dev server. The Aspire Dashboard URL appears in the console - all service URLs (API docs, pgAdmin, MinIO) are linked from the Dashboard.
+<!-- @init:else -->
+That's it. Aspire starts the infrastructure as containers and launches the API. The Aspire Dashboard URL appears in the console - all service URLs (API docs, pgAdmin, MinIO) are linked from the Dashboard.
+<!-- @init:end -->
 
 | Service | URL |
 |---|---|
 | **Aspire Dashboard** | Shown in console output |
+<!-- @init:if frontend=yes -->
 | **Frontend** | `http://localhost:<BASE_PORT>` (default: `http://localhost:13000`) |
+<!-- @init:else -->
+| **API docs** | `http://localhost:<BASE_PORT + 2>` (default: `http://localhost:13002`) |
+<!-- @init:end -->
 | **MailPit (Email Testing)** | `http://localhost:<BASE_PORT + 8>` |
 
-A Superuser is seeded with credentials you provide during `init.sh` / `init.ps1` (defaults: `superuser@test.com` / `Superuser123!`). Configured in `appsettings.Development.json`.
+<!-- @init:if auth=jwt -->
+A Superuser is seeded in development with the credentials you gave init (defaults: `superuser@test.com` / `Superuser123!`), stored in AppHost user secrets.
 
-### 3. Start Building
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+Sign-in goes through your Keycloak realm. Set up the client first: see [docs/keycloak.md](docs/keycloak.md).
+
+<!-- @init:end -->
+<!-- @init:if database=external -->
+The database is external: set its connection string with `dotnet user-secrets set ConnectionStrings:Database "<connection string>" --project src/backend/NetRockTemplate.AppHost` before launching.
+
+<!-- @init:end -->
+Production deployment: [docs/deployment.md](docs/deployment.md).
+
+### Start Building
 
 Add your domain entities, services, and pages - the architecture guides you.
 
