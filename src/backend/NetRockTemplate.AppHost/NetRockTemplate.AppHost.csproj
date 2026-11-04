@@ -5,8 +5,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!-- @init:if deploy=aspire uncomment -->
+        <!-- <PackageReference Include="Aspire.Hosting.Docker" /> -->
+        <!-- @init:end -->
+        <!-- @init:if database=managed -->
         <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+        <!-- @init:end -->
+        <!-- @init:if frontend=yes -->
         <PackageReference Include="Aspire.Hosting.JavaScript" />
+        <!-- @init:end -->
         <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" />
         <PackageReference Include="CommunityToolkit.Aspire.Hosting.Minio" />
     </ItemGroup>

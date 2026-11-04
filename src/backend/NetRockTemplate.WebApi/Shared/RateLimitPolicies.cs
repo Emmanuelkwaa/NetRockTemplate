@@ -6,23 +6,31 @@ namespace NetRockTemplate.WebApi.Shared;
 /// </summary>
 public static class RateLimitPolicies
 {
+    // @init:if auth=jwt
     /// <summary>
     /// Stricter limit for registration, partitioned by IP address.
     /// </summary>
     public const string Registration = "registration";
+    // @init:end
 
+    // @init:if auth=jwt,keycloak
     /// <summary>
     /// Stricter limit for login and token refresh, partitioned by IP address.
     /// </summary>
     public const string Auth = "auth";
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Stricter limit for password changes and account deletion, partitioned by authenticated user.
     /// </summary>
     public const string Sensitive = "sensitive";
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Stricter limit for state-changing admin and job management operations, partitioned by authenticated user.
     /// </summary>
     public const string AdminMutations = "admin-mutations";
+    // @init:end
 }

@@ -12,6 +12,7 @@ namespace NetRockTemplate.Shared;
 /// </summary>
 public static class ErrorMessages
 {
+    // @init:if auth=jwt
     /// <summary>
     /// Authentication error messages.
     /// </summary>
@@ -37,7 +38,9 @@ public static class ErrorMessages
         public const string PasswordSameAsCurrent = "New password must be different from your current password.";
         public const string CaptchaInvalid = "CAPTCHA verification failed. Please try again.";
     }
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Two-factor authentication error messages.
     /// </summary>
@@ -53,7 +56,9 @@ public static class ErrorMessages
         public const string RecoveryCodeInvalid = "The recovery code is invalid.";
         public const string InvalidCode = "The two-factor code is invalid.";
     }
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// User self-service error messages.
     /// </summary>
@@ -67,7 +72,9 @@ public static class ErrorMessages
         public const string DeleteFailed = "Failed to delete account.";
         public const string LastSuperuserCannotDelete = "Cannot delete your account while you are the last superuser.";
     }
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Administrative operation error messages.
     /// </summary>
@@ -99,7 +106,9 @@ public static class ErrorMessages
         public const string DisableTwoFactorSelfAction = "You cannot disable your own two-factor authentication from the admin panel.";
         public const string DisableTwoFactorFailed = "Failed to disable two-factor authentication.";
     }
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// Role management error messages.
     /// </summary>
@@ -118,6 +127,7 @@ public static class ErrorMessages
         public const string UpdateFailed = "Failed to update role.";
         public const string DeleteFailed = "Failed to delete role.";
     }
+    // @init:end
 
     /// <summary>
     /// Pagination error messages.
@@ -154,6 +164,7 @@ public static class ErrorMessages
         public const string CrossOriginRequestBlocked = "Cross-origin requests are not allowed.";
     }
 
+    // @init:if auth=jwt
     /// <summary>
     /// Avatar upload and processing error messages.
     /// </summary>
@@ -164,7 +175,9 @@ public static class ErrorMessages
         public const string ProcessingFailed = "Failed to process the avatar image.";
         public const string NotFound = "Avatar not found.";
     }
+    // @init:end
 
+    // @init:if auth=jwt
     /// <summary>
     /// External authentication (OAuth2) error messages.
     /// </summary>
@@ -188,6 +201,7 @@ public static class ErrorMessages
         public const string TestConnectionProviderUnreachable = "Could not reach the authentication provider. Please try again later.";
         public const string TestConnectionNotConfigured = "No credentials are configured for this provider.";
     }
+    // @init:end
 
     /// <summary>
     /// Generic entity operation error messages (repository layer).
@@ -198,4 +212,20 @@ public static class ErrorMessages
         public const string NotFound = "Entity not found.";
         public const string NotDeleted = "Entity could not be deleted.";
     }
+    // @init:if auth=keycloak uncomment
+    //
+    // /// <summary>
+    // /// Keycloak sign-in error messages.
+    // /// </summary>
+    // public static class Keycloak
+    // {
+    //     public const string Unavailable = "The identity provider is unavailable. Please try again later.";
+    //     public const string InvalidReturnUrl = "The return URL must be a local path.";
+    //     public const string LoginStateInvalid = "The sign-in request expired or is invalid. Please sign in again.";
+    //     public const string SignInRefused = "The identity provider did not complete the sign-in.";
+    //     public const string CodeExchangeFailed = "The sign-in could not be completed. Please sign in again.";
+    //     public const string RefreshFailed = "Your session has expired. Please sign in again.";
+    //     public const string TokenMissing = "No refresh token was provided.";
+    // }
+    // @init:end
 }

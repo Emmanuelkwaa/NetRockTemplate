@@ -5,8 +5,18 @@ namespace NetRockTemplate.Unit.Tests.Shared;
 
 public class ErrorMessagesTests
 {
+    // @init:if auth=jwt
     private static readonly string[] ExpectedNestedClasses =
         ["Auth", "User", "Admin", "Roles", "Pagination", "Server", "Jobs", "Security", "Entity"];
+    // @init:end
+    // @init:if auth=keycloak uncomment
+    // private static readonly string[] ExpectedNestedClasses =
+    //     ["Pagination", "Server", "Jobs", "Security", "Entity", "Keycloak"];
+    // @init:end
+    // @init:if auth=none uncomment
+    // private static readonly string[] ExpectedNestedClasses =
+    //     ["Pagination", "Server", "Jobs", "Security", "Entity"];
+    // @init:end
 
     [Fact]
     public void AllNestedClasses_ShouldExist()

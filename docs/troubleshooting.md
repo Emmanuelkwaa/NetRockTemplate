@@ -6,11 +6,17 @@
 
 - [Quick Diagnostics](#quick-diagnostics)
 - [Prerequisites & Versions](#prerequisites--versions)
+<!-- @init:if template -->
 - [Init Script](#init-script)
+<!-- @init:end -->
 - [Aspire (Local Development)](#aspire-local-development)
 - [Backend Development](#backend-development)
+<!-- @init:if frontend=yes -->
 - [Frontend Development](#frontend-development)
+<!-- @init:end -->
+<!-- @init:if auth=jwt -->
 - [Authentication & Authorization](#authentication--authorization)
+<!-- @init:end -->
 - [CI/CD](#cicd)
 - [Production Deployment](#production-deployment)
 - [General FAQ](#general-faq)
@@ -52,6 +58,7 @@ pnpm --version
 
 ---
 
+<!-- @init:if template -->
 ## Init Script
 
 ### Permission denied running `init.sh`
@@ -105,6 +112,18 @@ lsof -i :13000           # macOS / Linux
 netstat -ano | findstr :13000   # Windows
 ```
 
+### `Output folder is not empty`
+
+**Cause:** Init only writes into a missing or empty folder, so it never overwrites an existing project.
+
+**Fix:** Pass a new folder with `--output`, or remove the old one.
+
+### `Delete pattern matched nothing` warning
+
+**Cause:** A path in `template-options/manifest.json` no longer exists in the template, usually after a file was renamed or removed.
+
+**Fix:** Update the manifest. `tools/init/verify-matrix.sh` catches this and any leftover `@init:` markers across all option combinations.
+
 ### `dotnet-ef` not found
 
 **Cause:** The EF Core CLI tool isn't installed or restored.
@@ -119,6 +138,7 @@ This restores tools declared in `.config/dotnet-tools.json`, including `dotnet-e
 
 ---
 
+<!-- @init:end -->
 ## Aspire (Local Development)
 
 ### Docker is not running
@@ -228,6 +248,7 @@ Restart the API - the migration applies automatically on startup.
 
 ---
 
+<!-- @init:if frontend=yes -->
 ## Frontend Development
 
 ### `pnpm install` fails or produces a different lockfile
@@ -318,6 +339,8 @@ English is the base locale. The path pattern is `./src/messages/{locale}.json` a
 
 ---
 
+<!-- @init:end -->
+<!-- @init:if auth=jwt -->
 ## Authentication & Authorization
 
 ### 401 after logging in successfully
@@ -353,6 +376,7 @@ English is the base locale. The path pattern is `./src/messages/{locale}.json` a
 
 ---
 
+<!-- @init:end -->
 ## CI/CD
 
 ### Jobs are skipped
@@ -385,6 +409,7 @@ If your changes don't match these paths, the corresponding jobs won't run.
 
 ## Production Deployment
 
+<!-- @init:if frontend=yes -->
 ### SvelteKit CSRF errors in production (`403 Cross-site POST form submissions are forbidden`)
 
 **Cause:** SvelteKit requires the `ORIGIN` environment variable when running behind a TLS-terminating reverse proxy. Without it, form submissions and non-GET requests are rejected.
@@ -396,6 +421,7 @@ ORIGIN=https://your-domain.com
 ```
 
 If you have multiple origins (e.g., `www` and apex domain), use `ALLOWED_ORIGINS` for the extras.
+<!-- @init:end -->
 
 ### Required production environment variables
 
@@ -404,21 +430,29 @@ These must be set on the API container before it will start correctly:
 | Variable | Purpose |
 |---|---|
 | `ConnectionStrings__Database` | PostgreSQL connection string |
+<!-- @init:if auth=jwt -->
 | `Authentication__Jwt__Key` | Minimum 32 characters - generate with `openssl rand -base64 64` |
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+| `Authentication__Keycloak__ClientSecret` | Keycloak client secret (Authority and ClientId are in `appsettings.json`) |
+<!-- @init:end -->
 | `Cors__AllowedOrigins__0` | Production domain (e.g., `https://your-domain.com`) |
 | `ASPNETCORE_ENVIRONMENT` | Must be `Production` |
 
-See `appsettings.json` for the full configuration structure and [Before You Ship](before-you-ship.md) for the production checklist.
+See [Deployment](deployment.md) for the full list, `appsettings.json` for the configuration structure and [Before You Ship](before-you-ship.md) for the production checklist.
 
 ---
 
 ## General FAQ
 
+<!-- @init:if auth=jwt -->
 ### Which user should I log in as?
 
-A single Superuser is seeded with credentials you provided during `init.sh` / `init.ps1` (defaults: `superuser@test.com` / `Superuser123!`). Configured in `appsettings.Development.json` under `Seed:Users`. You can add more seed users there if needed.
+A single Superuser is seeded in development with the credentials you gave init (defaults: `superuser@test.com` / `Superuser123!`). They are stored in AppHost user secrets as `Parameters:seed-user-email` and `Parameters:seed-user-password`. Add more seed users under `Seed:Users` in `appsettings.Development.json` if needed.
 
 Use the Superuser for full access. Create additional users with lower roles to test authorization guards.
+
+<!-- @init:end -->
 
 ### Where are the logs?
 

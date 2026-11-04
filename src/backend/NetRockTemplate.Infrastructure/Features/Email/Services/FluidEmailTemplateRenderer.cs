@@ -4,7 +4,9 @@ using System.Text.Encodings.Web;
 using Fluid;
 using Microsoft.Extensions.Options;
 using NetRockTemplate.Application.Features.Email;
+// @init:if auth=jwt
 using NetRockTemplate.Application.Features.Email.Models;
+// @init:end
 using NetRockTemplate.Infrastructure.Features.Email.Options;
 
 namespace NetRockTemplate.Infrastructure.Features.Email.Services;
@@ -158,10 +160,14 @@ internal class FluidEmailTemplateRenderer : IEmailTemplateRenderer
             }
         };
 
+        // @init:if auth=jwt
         options.MemberAccessStrategy.Register<VerifyEmailModel>();
         options.MemberAccessStrategy.Register<ResetPasswordModel>();
         options.MemberAccessStrategy.Register<AdminResetPasswordModel>();
         options.MemberAccessStrategy.Register<InvitationModel>();
+        // @init:else uncomment
+        // // Register each email model type here, e.g. options.MemberAccessStrategy.Register<WelcomeModel>();
+        // @init:end
 
         return options;
     }

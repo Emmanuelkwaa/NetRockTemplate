@@ -51,7 +51,11 @@ services.AddScoped<IRecurringJobDefinition>(sp => sp.GetRequiredService<MyCleanu
 
 **3. Verify:** `dotnet build src/backend/NetRockTemplate.slnx`
 
+<!-- @init:if auth=jwt -->
 `UseJobScheduling()` discovers all `IRecurringJobDefinition` implementations automatically. The job appears in admin panel at `/admin/jobs`. Pause state persists to DB (`hangfire.pausedjobs`).
+<!-- @init:else -->
+`UseJobScheduling()` discovers all `IRecurringJobDefinition` implementations automatically. There is no job admin API or page; monitor jobs in the Hangfire dashboard (Development only). Pause state persists to DB (`hangfire.pausedjobs`).
+<!-- @init:end -->
 
 **Configuration** via `appsettings.json`: `"JobScheduling": { "Enabled": true, "WorkerCount": 4 }`. Dev dashboard at `http://localhost:8080/hangfire`.
 

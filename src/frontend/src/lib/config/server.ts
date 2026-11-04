@@ -2,8 +2,10 @@ import { env } from '$env/dynamic/private';
 
 export const SERVER_CONFIG = {
 	API_URL: env.API_URL || 'http://localhost:13002',
+	// @init:if auth=jwt
 	/** Cloudflare Turnstile site key - read at runtime so a single image works across environments. */
 	TURNSTILE_SITE_KEY: env.TURNSTILE_SITE_KEY || env.PUBLIC_TURNSTILE_SITE_KEY || '',
+	// @init:end
 	/** Additional origins allowed through the API proxy CSRF check (e.g. ngrok, reverse proxy). */
 	ALLOWED_ORIGINS:
 		env.ALLOWED_ORIGINS?.split(',')

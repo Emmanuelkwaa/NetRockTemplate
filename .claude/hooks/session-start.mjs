@@ -24,6 +24,7 @@ try {
   console.log('MISSING .NET SDK');
 }
 
+// @init:if frontend=yes
 // pnpm
 try {
   console.log(run('pnpm --version', { cwd: resolve(projectDir, 'src/frontend') }));
@@ -31,6 +32,7 @@ try {
 } catch {
   console.log('MISSING pnpm');
 }
+// @init:end
 
 // dotnet-ef
 try {

@@ -456,5 +456,8 @@ $RECYCLE.BIN/
 ## Data from docker
 /data/attachments/*
 
-# Legacy root .env (not used - config is in appsettings.json and src/frontend/.env.local)
+# Production secrets for docker compose (copy from .env.example)
 /.env
+
+# Aspire publish output (its .env holds production secrets)
+aspire-output/

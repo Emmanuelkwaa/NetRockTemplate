@@ -14,8 +14,12 @@ export const shortcutsState = new ShortcutsState();
 
 export const ShortcutAction = {
 	CommandPalette: 'commandPalette',
+	// @init:if auth=jwt
 	Settings: 'settings',
+	// @init:end
+	// @init:if auth=jwt,keycloak
 	Logout: 'logout',
+	// @init:end
 	Help: 'help',
 	ToggleSidebar: 'toggleSidebar'
 } as const;
@@ -46,6 +50,7 @@ const SHORTCUTS: ShortcutConfig[] = [
 		display: () => (IS_MAC ? '⌘ K' : 'Ctrl+K'),
 		allowInInput: true
 	},
+	// @init:if auth=jwt
 	{
 		code: 'Comma',
 		mod: true,
@@ -53,6 +58,8 @@ const SHORTCUTS: ShortcutConfig[] = [
 		description: m.shortcuts_settings,
 		display: () => (IS_MAC ? '⌘ ,' : 'Ctrl+,')
 	},
+	// @init:end
+	// @init:if auth=jwt,keycloak
 	{
 		code: 'KeyL',
 		mod: true,
@@ -61,6 +68,7 @@ const SHORTCUTS: ShortcutConfig[] = [
 		description: m.shortcuts_logout,
 		display: () => (IS_MAC ? '⌘ ⇧ L' : 'Ctrl+Shift+L')
 	},
+	// @init:end
 	{
 		code: 'BracketLeft',
 		mod: true,

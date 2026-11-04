@@ -3,10 +3,13 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
 	import { page } from '$app/state';
+	// @init:if auth=jwt,keycloak
 	import { resolve } from '$app/paths';
+	// @init:end
 	import { breadcrumbState } from '$lib/state/breadcrumb.svelte';
 	import * as m from '$lib/paraglide/messages';
 
+	// @init:if auth=jwt
 	const segmentLabels: Record<string, () => string> = {
 		profile: m.nav_profile,
 		settings: m.nav_settings,
@@ -24,6 +27,21 @@
 		jobs: resolve('/admin/jobs'),
 		'oauth-providers': resolve('/admin/oauth-providers')
 	};
+	// @init:else
+	// @init:if auth=keycloak uncomment
+	// const segmentLabels: Record<string, () => string> = {
+	// 	profile: m.nav_profile
+	// };
+
+	// const segmentHrefs: Record<string, string> = {
+	// 	profile: resolve('/profile')
+	// };
+	// @init:else uncomment
+	// const segmentLabels: Record<string, () => string> = {};
+
+	// const segmentHrefs: Record<string, string> = {};
+	// @init:end
+	// @init:end
 
 	interface Crumb {
 		label: string;

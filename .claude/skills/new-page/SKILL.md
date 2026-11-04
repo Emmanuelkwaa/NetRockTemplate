@@ -29,6 +29,7 @@ Use these as starting points - fill in the specifics from context:
    - Or `(public)/{feature}/` for unauthenticated pages
 5. Create `+page.svelte` with `<svelte:head>` using i18n title
 6. If server data needed: create `+page.server.ts` using `createApiClient(fetch, url.origin)`
+<!-- @init:if auth=jwt -->
 7. If permission-guarded: add check in `+page.server.ts`:
    ```typescript
    if (!hasPermission(user, Permissions.Feature.View)) throw redirect(303, '/');
@@ -39,6 +40,14 @@ Use these as starting points - fill in the specifics from context:
 8. Add i18n keys to both `en.json` and `cs.json`
 9. Add navigation entry in `AppSidebar.svelte` (with `permission` field if guarded)
 10. Add matching entry in `CommandPalette.svelte` (with `permission` field if admin-guarded)
+<!-- @init:else -->
+
+**Integration:**
+
+8. Add i18n keys to both `en.json` and `cs.json`
+9. Add navigation entry in `AppSidebar.svelte`
+10. Add matching entry in `CommandPalette.svelte`
+<!-- @init:end -->
 
 **Verify and commit:**
 

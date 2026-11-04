@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+// @init:if auth=jwt,keycloak
 using NetRockTemplate.Application.Identity;
+// @init:end
 using NetRockTemplate.Domain.Entities;
 
 namespace NetRockTemplate.Infrastructure.Persistence.Interceptors;
@@ -17,13 +19,21 @@ namespace NetRockTemplate.Infrastructure.Persistence.Interceptors;
 /// </list>
 /// </summary>
 /// <remarks>
+// @init:if auth=jwt,keycloak
 /// The <c>*By</c> fields will be <c>null</c> when no user is authenticated (e.g., background jobs, system operations).
 /// This is expected behavior - entities created or modified by the system will have <c>null</c> user references.
+// @init:else
+/// The project has no authentication, so the <c>*By</c> fields are always <c>null</c>.
+// @init:end
 /// <para>Pattern documented in .claude/skills/backend-conventions/SKILL.md.</para>
 /// </remarks>
+// @init:if auth=jwt,keycloak
 internal class AuditingInterceptor(
     IUserContext userContext,
     TimeProvider timeProvider) : SaveChangesInterceptor
+// @init:else uncomment
+// internal class AuditingInterceptor(TimeProvider timeProvider) : SaveChangesInterceptor
+// @init:end
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -45,7 +55,11 @@ internal class AuditingInterceptor(
         if (context is null) return;
 
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        // @init:if auth=jwt,keycloak
         var userId = userContext.UserId;
+        // @init:else uncomment
+        // Guid? userId = null;
+        // @init:end
 
         foreach (var entry in context.ChangeTracker.Entries<BaseEntity>()) ApplyAuditingFields(entry, utcNow, userId);
     }

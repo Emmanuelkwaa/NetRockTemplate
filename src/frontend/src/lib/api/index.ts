@@ -1,4 +1,8 @@
+// @init:if auth=jwt,keycloak
 export { createApiClient, browserClient, initBrowserAuth } from './client';
+// @init:else uncomment
+// export { createApiClient, browserClient } from './client';
+// @init:end
 export * from './error-handling';
 export * from './mutation';
 

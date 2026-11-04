@@ -14,20 +14,33 @@ src/
 │   ├── auth/                      # auth.ts (getUser, logout), middleware.ts (token refresh)
 │   ├── components/
 │   │   ├── ui/                    # shadcn (generated, customizable)
+<!-- @init:if auth=jwt -->
 │   │   ├── auth/                  # AuthShell, LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm, EmailVerificationBanner, TurnstileWidget, TwoFactorStep
 │   │   ├── layout/                # Header, AppSidebar, UserNav, ThemeToggle, LanguageSelector, ShortcutsHelp
 │   │   ├── profile/               # ProfileForm, ProfileHeader, AvatarDialog, AccountDetails, InfoItem
 │   │   ├── settings/              # ChangePasswordForm, DeleteAccountDialog, ActivityLog, TwoFactorCard, TwoFactorSetupDialog, TwoFactorDisableDialog, TwoFactorRecoveryCodesDialog
 │   │   ├── admin/                 # UserTable, UserDetailCards, UserManagementCard, RoleManagement, AccountActions, RoleCardGrid, RoleDetailsCard, RolePermissionsSection, RoleDeleteSection, JobTable, JobInfoCard, JobActionsCard, JobExecutionHistory, AuditTrailCard, ...
+<!-- @init:else -->
+│   │   ├── layout/                # Header, AppSidebar, ThemeToggle, LanguageSelector, ShortcutsHelp, ...
+<!-- @init:end -->
 │   │   └── common/                # StatusIndicator, WorkInProgress
 │   ├── config/                    # i18n.ts (client-safe), server.ts (server-only - never export from barrel)
 │   ├── state/                     # .svelte.ts files only (cooldown, health, shake, theme, sidebar, shortcuts)
 │   ├── types/index.ts             # Type aliases from API schemas
 │   └── utils/                     # ui.ts (cn()), permissions.ts, audit.ts, platform.ts, roles.ts, jobs.ts
 ├── routes/
+<!-- @init:if auth=jwt -->
 │   ├── (app)/                     # Authenticated (redirect guard)
 │   │   └── admin/                 # Permission-guarded per page
 │   ├── (public)/login/            # Redirect away if logged in
+<!-- @init:end -->
+<!-- @init:if auth=keycloak -->
+│   ├── (app)/                     # Authenticated (redirect guard)
+│   ├── (public)/login/            # Hands off to Keycloak sign-in
+<!-- @init:end -->
+<!-- @init:if auth=none -->
+│   ├── (app)/                     # App shell pages (no auth)
+<!-- @init:end -->
 │   └── api/[...path]/             # Catch-all proxy to backend
 ├── messages/en.json, cs.json      # i18n
 └── styles/                        # themes.css, tailwind.css, animations.css, base.css, utilities.css
@@ -174,6 +187,7 @@ hooks.server.ts -> +layout.server.ts (root: getUser) -> (app)/+layout.server.ts 
 
 Root layout fetches user **once** via `getUser()` which returns `GetUserResult` - distinguishes "not authenticated" from "backend unavailable".
 
+<!-- @init:if auth=jwt -->
 ### Permission Guards
 
 1. **Admin layout**: broad gate - any admin permission
@@ -185,6 +199,7 @@ Root layout fetches user **once** via `getUser()` which returns `GetUserResult` 
 import { hasPermission, hasAnyPermission, Permissions } from '$lib/utils';
 let canManage = $derived(hasPermission(data.user, Permissions.Users.Manage));
 ```
+<!-- @init:end -->
 
 ### Graceful Degradation for Secondary Fetches
 
@@ -214,7 +229,9 @@ Add to both `en.json` and `cs.json`. Use: `import * as m from '$lib/paraglide/me
 
 Use native `fetch()` with `FormData` for file uploads.
 
+<!-- @init:if auth=jwt -->
 **Avatar URLs:** If `user.hasAvatar` is true, construct `/api/users/${user.id}/avatar?v=${version}` where `version` is a `$state` variable bumped on avatar dialog close.
+<!-- @init:end -->
 
 ## Security
 

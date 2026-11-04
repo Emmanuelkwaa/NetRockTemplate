@@ -1,6 +1,10 @@
+// @init:if auth=jwt
 using Microsoft.AspNetCore.Identity;
+// @init:end
 using Microsoft.EntityFrameworkCore;
+// @init:if auth=jwt
 using NetRockTemplate.Infrastructure.Features.Authentication.Models;
+// @init:end
 
 namespace NetRockTemplate.Infrastructure.Persistence.Extensions;
 
@@ -11,6 +15,7 @@ internal static class ModelBuilderExtensions
 {
     extension(ModelBuilder builder)
     {
+        // @init:if auth=jwt
         /// <summary>
         /// Moves all ASP.NET Identity tables into the <c>auth</c> schema.
         /// </summary>
@@ -26,16 +31,22 @@ internal static class ModelBuilderExtensions
             _ = builder.Entity<IdentityRoleClaim<Guid>>().ToTable(name: "RoleClaims", schema);
             _ = builder.Entity<IdentityUserToken<Guid>>().ToTable(name: "UserTokens", schema);
         }
+        // @init:end
 
         /// <summary>
-        /// Registers the PostgreSQL <c>similarity</c> function for use in LINQ queries.
+        /// Enables the PostgreSQL <c>pg_trgm</c> extension and registers its <c>similarity</c>
+        /// function for use in LINQ queries. Migrations run <c>CREATE EXTENSION IF NOT EXISTS pg_trgm</c>,
+        /// which needs the CREATE privilege on the database (pg_trgm is a trusted extension).
         /// </summary>
-        public void ApplyFuzzySearch() =>
+        public void ApplyFuzzySearch()
+        {
+            builder.HasPostgresExtension("pg_trgm");
             builder
                 .HasDbFunction(
                     typeof(StringExtensions)
                         .GetMethod(nameof(StringExtensions.Similarity))!)
                 .HasName("similarity")
                 .IsBuiltIn();
+        }
     }
 }

@@ -47,7 +47,11 @@ Always backend first, then types bridge, then frontend. Commit each phase separa
 
 **Frontend last:**
 11. Components in `$lib/components/{feature}/`
+<!-- @init:if auth=jwt -->
 12. Page route + server load + permission guard
+<!-- @init:else -->
+12. Page route + server load
+<!-- @init:end -->
 13. i18n keys in both `en.json` and `cs.json`
 14. Navigation (sidebar + command palette)
 15. Frontend tests

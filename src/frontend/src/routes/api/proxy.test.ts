@@ -2,10 +2,11 @@
  * Tests for the BFF API proxy - the catch-all route that forwards requests
  * from the SvelteKit frontend to the .NET backend.
  *
- * The proxy has three main responsibilities:
+ * The proxy has four main responsibilities:
  * 1. CSRF protection - reject cross-origin state-changing requests
  * 2. Header filtering - allowlist request headers, strip response headers
- * 3. Error handling - return ProblemDetails for connection failures
+ * 3. Redirect pass-through - hand backend 3xx responses to the browser untouched
+ * 4. Error handling - return ProblemDetails for connection failures
  *
  * All helper functions (isOriginAllowed, filterRequestHeaders, stripResponseHeaders)
  * are module-private, so they are tested indirectly through the fallback handler.
@@ -481,6 +482,7 @@ describe('API proxy - URL construction and cookie auth paths', () => {
 		expect(targetUrl.searchParams.get('size')).toBe('10');
 	});
 
+	// @init:if auth=jwt
 	it('appends useCookies=true for auth/login path', async () => {
 		const event = mockProxyEvent({ path: 'auth/login' });
 
@@ -491,6 +493,8 @@ describe('API proxy - URL construction and cookie auth paths', () => {
 		expect(targetUrl.searchParams.get('useCookies')).toBe('true');
 	});
 
+	// @init:end
+	// @init:if auth=jwt,keycloak
 	it('appends useCookies=true for auth/refresh path', async () => {
 		const event = mockProxyEvent({ path: 'auth/refresh' });
 
@@ -500,6 +504,8 @@ describe('API proxy - URL construction and cookie auth paths', () => {
 
 		expect(targetUrl.searchParams.get('useCookies')).toBe('true');
 	});
+	// @init:end
+	// @init:if auth=jwt
 
 	it('appends useCookies=true for auth/two-factor/login path', async () => {
 		const event = mockProxyEvent({ path: 'auth/two-factor/login' });
@@ -530,6 +536,7 @@ describe('API proxy - URL construction and cookie auth paths', () => {
 
 		expect(targetUrl.searchParams.get('useCookies')).toBe('true');
 	});
+	// @init:end
 
 	it('does not append useCookies for non-auth paths', async () => {
 		const event = mockProxyEvent({ path: 'users' });
@@ -552,6 +559,80 @@ describe('API proxy - URL construction and cookie auth paths', () => {
 		await fallback(event);
 
 		expect(getProxiedRequest(event).method).toBe('PUT');
+	});
+});
+
+describe('API proxy - redirect pass-through', () => {
+	it('does not follow backend redirects', async () => {
+		const event = mockProxyEvent();
+
+		await fallback(event);
+
+		expect(getProxiedRequest(event).redirect).toBe('manual');
+	});
+
+	it('passes a 302 with its Location header to the browser', async () => {
+		const event = mockProxyEvent({
+			fetchResponse: new Response(null, {
+				status: 302,
+				headers: { Location: 'https://idp.example.com/authorize?state=abc' }
+			})
+		});
+
+		const response = await fallback(event);
+
+		expect(response.status).toBe(302);
+		expect(response.headers.get('location')).toBe('https://idp.example.com/authorize?state=abc');
+	});
+
+	it('keeps a relative Location header unchanged', async () => {
+		const event = mockProxyEvent({
+			fetchResponse: new Response(null, { status: 302, headers: { Location: '/dashboard' } })
+		});
+
+		const response = await fallback(event);
+
+		expect(response.headers.get('location')).toBe('/dashboard');
+	});
+
+	it('keeps every Set-Cookie header on a redirect', async () => {
+		const headers = new Headers({ Location: '/' });
+		headers.append('Set-Cookie', '__Secure-ACCESS-TOKEN=a; Path=/; Secure; HttpOnly');
+		headers.append('Set-Cookie', '__Secure-REFRESH-TOKEN=r; Path=/; Secure; HttpOnly');
+		const event = mockProxyEvent({ fetchResponse: new Response(null, { status: 302, headers }) });
+
+		const response = await fallback(event);
+
+		expect(response.headers.getSetCookie()).toEqual([
+			'__Secure-ACCESS-TOKEN=a; Path=/; Secure; HttpOnly',
+			'__Secure-REFRESH-TOKEN=r; Path=/; Secure; HttpOnly'
+		]);
+	});
+
+	it('keeps every Set-Cookie header on a regular response', async () => {
+		const headers = new Headers({ 'Content-Type': 'application/json' });
+		headers.append('Set-Cookie', 'first=1; Path=/');
+		headers.append('Set-Cookie', 'second=2; Path=/');
+		const event = mockProxyEvent({ fetchResponse: new Response('{}', { headers }) });
+
+		const response = await fallback(event);
+
+		expect(response.headers.getSetCookie()).toEqual(['first=1; Path=/', 'second=2; Path=/']);
+	});
+
+	it('still strips internal headers from a redirect', async () => {
+		const event = mockProxyEvent({
+			fetchResponse: new Response(null, {
+				status: 302,
+				headers: { Location: '/', Server: 'Kestrel', 'X-Powered-By': 'ASP.NET' }
+			})
+		});
+
+		const response = await fallback(event);
+
+		expect(response.headers.has('server')).toBe(false);
+		expect(response.headers.has('x-powered-by')).toBe(false);
+		expect(response.headers.get('location')).toBe('/');
 	});
 });
 

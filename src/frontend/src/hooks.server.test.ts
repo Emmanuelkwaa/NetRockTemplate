@@ -209,12 +209,14 @@ describe('hooks.server handle - production mode (dev: false)', () => {
 		await handle({ event, resolve: mockResolve() });
 		expect(event.locals.locale).toBe('en');
 	});
+	// @init:if auth=jwt,keycloak
 
 	it('page response - sets locals.user to null', async () => {
 		const event = mockRequestEvent('/');
 		await handle({ event, resolve: mockResolve() });
 		expect(event.locals.user).toBeNull();
 	});
+	// @init:end
 });
 
 describe('hooks.server handle - dev mode (dev: true)', () => {

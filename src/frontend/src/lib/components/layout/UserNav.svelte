@@ -15,8 +15,10 @@
 
 	let { user }: Props = $props();
 
+	// @init:if auth=jwt
 	// Avatar URL - stable until user object changes via invalidateAll
 	const avatarUrl = $derived(user?.hasAvatar && user?.id ? `/api/users/${user.id}/avatar` : null);
+	// @init:end
 
 	function getInitials(name: string) {
 		return name
@@ -33,9 +35,11 @@
 		{#snippet child({ props })}
 			<Button variant="ghost" size="icon" class="min-h-11 min-w-11 rounded-full" {...props}>
 				<Avatar.Root class="h-7 w-7">
+					<!-- @init:if auth=jwt -->
 					{#if avatarUrl}
 						<Avatar.Image src={avatarUrl} alt={user?.username || m.common_user()} />
 					{/if}
+					<!-- @init:end -->
 					<Avatar.Fallback>{getInitials(user?.username || m.common_user())}</Avatar.Fallback>
 				</Avatar.Root>
 			</Button>
@@ -52,10 +56,12 @@
 			<DropdownMenu.Item onclick={() => goto(resolve('/profile'))}>
 				{m.nav_profile()}
 			</DropdownMenu.Item>
+			<!-- @init:if auth=jwt -->
 			<DropdownMenu.Item onclick={() => goto(resolve('/settings'))}>
 				{m.nav_settings()}
 				<DropdownMenu.Shortcut>{getShortcutSymbol(ShortcutAction.Settings)}</DropdownMenu.Shortcut>
 			</DropdownMenu.Item>
+			<!-- @init:end -->
 		</DropdownMenu.Group>
 		<DropdownMenu.Separator />
 		<DropdownMenu.Item onclick={logout}>
