@@ -53,8 +53,10 @@
     <PackageVersion Include="CommunityToolkit.Aspire.Hosting.MailPit" Version="13.1.1" />
     <PackageVersion Include="CommunityToolkit.Aspire.Hosting.Minio" Version="13.1.1" />
     <PackageVersion Include="AWSSDK.S3" Version="3.7.510.11" />
+    <!-- @init:if auth=jwt -->
     <PackageVersion Include="SkiaSharp" Version="3.119.2" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.2" />
+    <!-- @init:end -->
   </ItemGroup>
   <ItemGroup Label="Test">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />

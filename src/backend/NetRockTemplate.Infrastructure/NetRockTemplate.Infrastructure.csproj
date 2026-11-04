@@ -27,8 +27,10 @@
         <PackageReference Include="Hangfire.PostgreSql" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
         <PackageReference Include="AWSSDK.S3" />
+        <!-- @init:if auth=jwt -->
         <PackageReference Include="SkiaSharp" />
         <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+        <!-- @init:end -->
     </ItemGroup>
 
     <ItemGroup>

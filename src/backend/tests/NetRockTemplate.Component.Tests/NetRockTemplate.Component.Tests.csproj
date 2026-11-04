@@ -14,8 +14,10 @@
         <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
         <PackageReference Include="coverlet.collector" />
+        <!-- @init:if auth=jwt -->
         <PackageReference Include="SkiaSharp" />
         <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+        <!-- @init:end -->
     </ItemGroup>
 
     <ItemGroup>
