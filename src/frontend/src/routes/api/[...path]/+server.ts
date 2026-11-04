@@ -1,8 +1,11 @@
 import type { RequestHandler } from './$types';
+// @init:if auth=jwt,keycloak
 import type { paths } from '$lib/api/v1';
+// @init:end
 import { SERVER_CONFIG } from '$lib/config/server';
 import { isFetchErrorWithCode } from '$lib/api';
 
+// @init:if auth=jwt,keycloak
 /**
  * Strips the `/api/` prefix from a generated API path to produce the proxy
  * route parameter.  The `satisfies` constraint ensures a compile error if
@@ -20,6 +23,7 @@ function proxyPath<P extends keyof paths>(path: P): string {
  *
  * Derived from the generated `paths` type so route renames cause compile errors.
  */
+// @init:if auth=jwt
 const COOKIE_AUTH_PATHS = [
 	proxyPath('/api/auth/login'),
 	proxyPath('/api/auth/refresh'),
@@ -27,6 +31,10 @@ const COOKIE_AUTH_PATHS = [
 	proxyPath('/api/auth/two-factor/login/recovery'),
 	proxyPath('/api/auth/external/callback')
 ];
+// @init:else uncomment
+// const COOKIE_AUTH_PATHS = [proxyPath('/api/auth/refresh')];
+// @init:end
+// @init:end
 
 /** HTTP methods that can mutate state and are vulnerable to CSRF */
 const UNSAFE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -79,7 +87,7 @@ function isOriginAllowed(request: Request, url: URL): boolean {
 
 	// Browsers always send Origin on cross-origin requests and on same-origin
 	// POST/PUT/PATCH/DELETE. A missing Origin on an unsafe method means either
-	// a same-origin request from an older browser or a non-browser client —
+	// a same-origin request from an older browser or a non-browser client -
 	// both are safe to allow through.
 	if (!origin) {
 		return true;
@@ -117,11 +125,24 @@ function filterRequestHeaders(source: Headers, clientAddress: string): Headers {
 	return filtered;
 }
 
-/** Remove unwanted headers from the backend response. */
+/**
+ * Copies the backend response headers, minus the stripped ones.
+ *
+ * `Set-Cookie` is copied value by value via `getSetCookie()`, so a response that
+ * sets several cookies (e.g. access and refresh token) keeps every one of them
+ * instead of a single comma-joined value. `Location` passes through untouched,
+ * so backend redirects reach the browser as-is.
+ */
 function stripResponseHeaders(response: Response): Response {
-	const headers = new Headers(response.headers);
-	for (const name of STRIPPED_RESPONSE_HEADERS) {
-		headers.delete(name);
+	const headers = new Headers();
+	for (const [name, value] of response.headers) {
+		if (name === 'set-cookie' || STRIPPED_RESPONSE_HEADERS.includes(name)) {
+			continue;
+		}
+		headers.set(name, value);
+	}
+	for (const cookie of response.headers.getSetCookie()) {
+		headers.append('set-cookie', cookie);
 	}
 	return new Response(response.body, {
 		status: response.status,
@@ -155,10 +176,12 @@ export const fallback: RequestHandler = async ({
 	// Build target URL with query string
 	const targetParams = new URLSearchParams(url.search);
 
+	// @init:if auth=jwt,keycloak
 	// Web clients need cookies for auth endpoints
 	if (COOKIE_AUTH_PATHS.includes(params.path)) {
 		targetParams.set('useCookies', 'true');
 	}
+	// @init:end
 
 	const queryString = targetParams.toString();
 	const targetUrl = `${SERVER_CONFIG.API_URL}/api/${params.path}${queryString ? `?${queryString}` : ''}`;
@@ -167,6 +190,10 @@ export const fallback: RequestHandler = async ({
 		method: request.method,
 		headers: filterRequestHeaders(request.headers, getClientAddress()),
 		body: request.body,
+		// Never follow backend redirects here. A followed redirect would drop the 3xx
+		// status, its Location and its Set-Cookie headers (e.g. a sign-in flow that sets
+		// a state cookie and redirects to an identity provider). The browser follows it.
+		redirect: 'manual',
 		// @ts-expect-error - duplex is needed for streaming bodies in some node versions/fetch implementations
 		duplex: 'half'
 	});
