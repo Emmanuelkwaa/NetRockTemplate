@@ -83,7 +83,8 @@ services:
     ports:
       - "${HTTP_PORT:-3000}:3000"
     healthcheck:
-      test: [ "CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))" ]
+      # Liveness of the Node server only; the API has its own healthcheck.
+      test: [ "CMD", "node", "-e", "fetch('http://127.0.0.1:3000/', { redirect: 'manual' }).then(r => process.exit(r.status < 500 ? 0 : 1)).catch(() => process.exit(1))" ]
       interval: 5s
       timeout: 3s
       retries: 3
