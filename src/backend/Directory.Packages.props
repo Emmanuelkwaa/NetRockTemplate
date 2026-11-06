@@ -13,6 +13,9 @@
     <!-- @init:if database=managed -->
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.1.2" />
     <!-- @init:end -->
+    <!-- @init:if keycloak-aspire=yes uncomment -->
+    <!-- <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.1.2-preview.1.26125.13" /> -->
+    <!-- @init:end -->
 
     <!-- ServiceDefaults -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.3.0" />

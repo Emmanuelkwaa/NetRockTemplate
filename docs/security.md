@@ -51,12 +51,17 @@ NETrock is built **security-first**. Every decision defaults to the most restric
 <!-- @init:if auth=keycloak -->
 ## Authentication & Session Security
 
-- **Keycloak is the identity provider** - passwords, multi-factor authentication, account recovery, and user and role management live on your Keycloak server, not in this project. Setup: [Keycloak](keycloak.md)
-- **Strict token validation** - access tokens are checked for signature (realm signing keys from discovery metadata), exact issuer, audience, and lifetime. HTTPS metadata is required outside Development
+- **Keycloak is the identity provider** - passwords, multi-factor authentication, account recovery, and user and role management live in Keycloak, not in this project. Setup: [Keycloak](keycloak.md)
+- **Strict token validation** - access tokens are checked for signature (realm signing keys from discovery metadata), exact issuer, audience, and lifetime. HTTPS metadata is required outside Development; only the optional internal Keycloak address (`InternalUrl`) may use plain HTTP
+- **No secrets in the repository** - client secrets, admin passwords and test user credentials live in AppHost user secrets (development) or the environment (production). Generated realm files only contain `${...}` placeholders
+- **Required production settings** - deployment stops with an error until the Keycloak values are set, and the API refuses to start without them
 - **Authorization code flow with PKCE** - the state value and PKCE verifier travel in a short-lived, data-protected HttpOnly cookie, the state is compared in constant time on callback, and the return URL must be a local path
 - **Tokens in HttpOnly cookies** - after sign-in the API sets the access and refresh tokens as HttpOnly cookies, so they never touch JavaScript. Non-browser clients can send Keycloak bearer tokens directly
 - **Refresh and logout through Keycloak** - `POST /api/auth/refresh` rotates the tokens with Keycloak; `POST /api/auth/logout` ends the Keycloak session and clears the cookies
 - **Deny by default** - every `ApiController` endpoint requires an authenticated caller
+<!-- @init:if keycloak-prod=managed -->
+- **Managed Keycloak in production** - runs in production mode (`start`) behind a TLS-terminating proxy, with its own database and login, a bootstrap admin from the environment, and a realm without users. Redeploying never overwrites an existing realm
+<!-- @init:end -->
 
 ## Personal Data
 

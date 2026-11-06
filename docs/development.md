@@ -33,7 +33,11 @@ Development secrets live in AppHost user secrets (`dotnet user-secrets list --pr
 <!-- @init:else -->
 Behavioral config (log levels, rate limits, CORS) lives in `appsettings.Development.json`. Infrastructure connection strings are injected by Aspire via environment variables - no manual config needed.
 <!-- @init:end -->
-<!-- @init:if auth=keycloak -->
+<!-- @init:if keycloak-dev=managed -->
+
+Aspire also runs Keycloak (port base + 9) with the realm in `keycloak/dev/realm.json`. Its client secret, admin password and test user credentials are AppHost user secrets (`Parameters:keycloak-*`), passed to the realm import as environment variables. The realm is imported once into a data volume. See [Keycloak](keycloak.md#managed-keycloak-in-development).
+<!-- @init:end -->
+<!-- @init:if keycloak-dev=external -->
 
 The Keycloak client secret lives in AppHost user secrets as `Parameters:keycloak-client-secret`. See [Keycloak](keycloak.md).
 <!-- @init:end -->

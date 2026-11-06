@@ -66,6 +66,27 @@ public class KeycloakOptionsValidationTests
         Assert.Empty(Validate(options));
     }
 
+    [Theory]
+    [InlineData("keycloak:8080/realms/x")]
+    [InlineData("ftp://keycloak/realms/x")]
+    public void InternalUrl_Invalid_ReturnsError(string internalUrl)
+    {
+        var options = new KeycloakOptions { Authority = "https://a.example.com/realms/x", ClientId = "app", ClientSecret = "s", InternalUrl = internalUrl };
+
+        Assert.Contains(Validate(options), r => r.MemberNames.Contains(nameof(KeycloakOptions.InternalUrl)));
+    }
+
+    [Theory]
+    [InlineData(null, "https://a.example.com/realms/x")]
+    [InlineData("http://keycloak:8080/realms/x/", "http://keycloak:8080/realms/x")]
+    public void BackchannelRealmUrl_UsesInternalUrlWhenSet(string? internalUrl, string expected)
+    {
+        var options = new KeycloakOptions { Authority = "https://a.example.com/realms/x", ClientId = "app", ClientSecret = "s", InternalUrl = internalUrl };
+
+        Assert.Empty(Validate(options));
+        Assert.Equal(expected, options.BackchannelRealmUrl);
+    }
+
     [Fact]
     public void Issuer_TrimsTrailingSlash()
     {

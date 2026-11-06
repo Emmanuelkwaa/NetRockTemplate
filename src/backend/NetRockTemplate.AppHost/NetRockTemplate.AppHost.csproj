@@ -11,6 +11,9 @@
         <!-- @init:if database=managed -->
         <PackageReference Include="Aspire.Hosting.PostgreSQL" />
         <!-- @init:end -->
+        <!-- @init:if keycloak-aspire=yes uncomment -->
+        <!-- <PackageReference Include="Aspire.Hosting.Keycloak" /> -->
+        <!-- @init:end -->
         <!-- @init:if frontend=svelte -->
         <PackageReference Include="Aspire.Hosting.JavaScript" />
         <!-- @init:end -->

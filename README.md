@@ -88,16 +88,19 @@ Init asks for a name and base port, then the options below, and writes a new pro
 | Option | Values | Default |
 |---|---|---|
 | `--stack` | `api-svelte` (API + SvelteKit), `api-blazor` (API + Blazor SSR), `api` (API only), `blazor` (Blazor SSR only, no backend) | `api-svelte` |
-| `--auth` | `jwt` (built-in accounts, 2FA, OAuth, roles), `keycloak` (existing Keycloak server), `none`. Not for `blazor` | `jwt` |
+| `--auth` | `jwt` (built-in accounts, 2FA, OAuth, roles), `keycloak` (Keycloak as identity provider), `none`. Not for `blazor` | `jwt` |
+| `--keycloak-dev` | `managed` (Aspire runs Keycloak with a generated realm and test user), `external` (your server). Only with `--auth keycloak` | `external` |
+| `--keycloak-prod` | `managed` (the production stack runs Keycloak), `external` (your server; realm settings required at deployment). Only with `--auth keycloak` | `external` |
 | `--deploy` | `aspire` (Aspire generates production compose), `compose` (own `docker-compose.yaml`) | `aspire` |
 | `--database` | `managed` (PostgreSQL container), `external` (your server). Not for `blazor` | `managed` |
 
 Blazor projects start from the stock `dotnet new blazor` template (static server rendering, no interactivity) on your installed SDK, so they have no sign-in UI. In `api-blazor`, `--auth` protects the API and the Blazor app calls it through a named `HttpClient`; add sign-in pages per project.
 
-Other flags: `--name`, `--port`, `--output`, `--email` / `--password` (jwt superuser), `--keycloak-authority` / `--keycloak-client-id` / `--keycloak-client-secret`, `--yes`, `--no-migration`, `--no-commit`, `--no-aspire`. Run `./init.sh --help` for details.
+Other flags: `--name`, `--port`, `--output`, `--email` / `--password` (jwt superuser or Keycloak test user), `--keycloak-authority` / `--keycloak-client-id` / `--keycloak-client-secret` (development realm, `--keycloak-dev external` only), `--yes`, `--no-migration`, `--no-commit`, `--no-aspire`. Run `./init.sh --help` for details.
 
 ```bash
 ./init.sh --name MyApi --stack api --auth keycloak --deploy compose --yes
+./init.sh --name MyApp --auth keycloak --keycloak-dev managed --keycloak-prod managed --yes
 ./init.sh --name MySite --stack blazor --yes
 ```
 
@@ -138,7 +141,10 @@ That's it. Aspire starts the infrastructure as containers and launches the API. 
 A Superuser is seeded in development with the credentials you gave init (defaults: `superuser@test.com` / `Superuser123!`), stored in AppHost user secrets.
 
 <!-- @init:end -->
-<!-- @init:if auth=keycloak -->
+<!-- @init:if keycloak-dev=managed -->
+Sign-in goes through the local Keycloak that Aspire starts (admin console on `http://localhost:<BASE_PORT + 9>`). Sign in with the test user you gave init (defaults: `superuser@test.com` / `Superuser123!`), stored in AppHost user secrets. See [docs/keycloak.md](docs/keycloak.md).
+<!-- @init:end -->
+<!-- @init:if keycloak-dev=external -->
 Sign-in goes through your Keycloak realm. Set up the client first: see [docs/keycloak.md](docs/keycloak.md).
 
 <!-- @init:end -->

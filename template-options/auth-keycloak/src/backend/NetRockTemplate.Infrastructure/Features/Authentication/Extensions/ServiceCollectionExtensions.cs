@@ -23,7 +23,10 @@ public static class ServiceCollectionExtensions
         /// Tokens are read from the <c>Authorization</c> header first, then from the access token cookie.
         /// </summary>
         /// <param name="configuration">The application configuration.</param>
-        /// <param name="environment">The host environment. HTTPS metadata is required outside Development.</param>
+        /// <param name="environment">
+        /// The host environment. HTTPS metadata is required outside Development, except for
+        /// <see cref="KeycloakOptions.InternalUrl"/>, which is an internal network address.
+        /// </param>
         /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddKeycloakAuthentication(IConfiguration configuration, IHostEnvironment environment)
         {
@@ -39,7 +42,14 @@ public static class ServiceCollectionExtensions
                 {
                     opt.Authority = keycloak.Issuer;
                     opt.Audience = keycloak.ValidAudience;
-                    opt.RequireHttpsMetadata = !environment.IsDevelopment();
+                    var internalUrl = !string.IsNullOrWhiteSpace(keycloak.InternalUrl);
+                    if (internalUrl)
+                    {
+                        // Metadata and signing keys come over the internal network; the issuer stays the public Authority.
+                        opt.MetadataAddress = keycloak.BackchannelRealmUrl + "/.well-known/openid-configuration";
+                    }
+
+                    opt.RequireHttpsMetadata = !environment.IsDevelopment() && !internalUrl;
                     opt.MapInboundClaims = false;
                     opt.TokenValidationParameters = new TokenValidationParameters
                     {

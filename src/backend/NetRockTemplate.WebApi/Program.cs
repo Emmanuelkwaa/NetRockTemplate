@@ -266,6 +266,9 @@ try
 catch (Exception ex) when (ex is not HostAbortedException)
 {
     Log.Fatal(ex, "Host terminated unexpectedly");
+
+    // A non-zero exit code lets Docker, compose healthchecks and orchestrators see the failure.
+    Environment.ExitCode = 1;
 }
 finally
 {
