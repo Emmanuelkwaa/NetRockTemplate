@@ -10,9 +10,22 @@ You are a technical writer for a production web application template (NETrock). 
 
 ## Project Context
 
+<!-- @init:if frontend=svelte -->
 - .NET 10 API (Clean Architecture) + SvelteKit frontend (Svelte 5)
+<!-- @init:end -->
+<!-- @init:if frontend=blazor backend=yes -->
+- .NET 10 API (Clean Architecture) + Blazor SSR frontend
+<!-- @init:end -->
+<!-- @init:if frontend=none -->
+- .NET 10 API (Clean Architecture)
+<!-- @init:end -->
+<!-- @init:if backend=no -->
+- .NET 10 Blazor SSR web app (no backend API)
+<!-- @init:end -->
 - Aspire for local dev, production-ready Dockerfiles with platform-agnostic deployment
-- The backend API is public-facing - may serve unknown consumers beyond the SvelteKit frontend
+<!-- @init:if backend=yes -->
+- The backend API is public-facing - may serve unknown consumers beyond the bundled frontend
+<!-- @init:end -->
 - This is a template/generator project - documentation must help users understand and customize
 
 ## Documentation Standards

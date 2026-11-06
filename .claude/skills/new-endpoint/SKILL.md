@@ -37,5 +37,7 @@ Use these as starting points - fill in the specifics from context:
 12. `dotnet build src/backend/NetRockTemplate.slnx` - fix errors, loop until green
 13. `dotnet test src/backend/NetRockTemplate.slnx -c Release` - fix failures, loop until green
 14. Commit: `feat({feature}): add {operation} endpoint`
+<!-- @init:if frontend=svelte -->
 15. Regenerate frontend types: `cd src/frontend && pnpm run api:generate` - fix any type errors
 16. Commit type changes if applicable
+<!-- @init:end -->

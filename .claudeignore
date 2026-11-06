@@ -1,16 +1,22 @@
 # Dependencies
+# @init:if frontend=svelte
 src/frontend/node_modules/
 src/frontend/pnpm-lock.yaml
+# @init:end
 
 # Build outputs
 src/backend/**/bin/
 src/backend/**/obj/
+# @init:if frontend=svelte
 src/frontend/.svelte-kit/
 src/frontend/build/
+# @init:end
 
 # Generated files (never hand-edit)
+# @init:if frontend=svelte
 src/frontend/src/lib/api/v1.d.ts
 src/frontend/src/lib/paraglide/
+# @init:end
 
 # EF Core migrations (large, auto-generated)
 src/backend/NetRockTemplate.Infrastructure/Features/Postgres/Migrations/

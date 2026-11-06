@@ -101,8 +101,13 @@ Quick-reference for "when you change X, also update Y" and "where does X live?"
 | **`TemplatedEmailSender`** (change render+send wrapping) | `TemplatedEmailSenderTests`, `AuthenticationService`, `AdminService` |
 | **`IFileStorageService`** (change upload/download contract) | `S3FileStorageService`, `UserService` (avatar ops), any future consumer |
 | **`IImageProcessingService`** (change avatar processing) | `ImageProcessingService`, `UserService.UploadAvatarAsync` |
+<!-- @init:if frontend=svelte -->
 | **`ApplicationUser.HasAvatar`** (change avatar flag) | `UserOutput`, `AdminUserOutput`, `UserResponse`, `AdminUserResponse`, `UserMapper`, `AdminMapper`, frontend `v1.d.ts` types, `ProfileHeader.svelte`, `UserNav.svelte` |
 | **Avatar endpoints** (`PUT/DELETE/GET`) | `UploadAvatarRequest`, `UploadAvatarRequestValidator`, `UserMapper`, frontend `AvatarDialog.svelte` |
+<!-- @init:else -->
+| **`ApplicationUser.HasAvatar`** (change avatar flag) | `UserOutput`, `AdminUserOutput`, `UserResponse`, `AdminUserResponse`, `UserMapper`, `AdminMapper` |
+| **Avatar endpoints** (`PUT/DELETE/GET`) | `UploadAvatarRequest`, `UploadAvatarRequestValidator`, `UserMapper` |
+<!-- @init:end -->
 | **`AuditActions.cs`** (add action constant) | Service that logs it, frontend `$lib/utils/audit.ts` (label, color, icon), i18n keys in `en.json`/`cs.json` |
 | **`AuditEvent` entity** (change fields) | `AuditEventConfiguration`, `AuditService`, Application DTOs (`AuditEventOutput`), WebApi DTOs, `AuditMapper`, frontend types |
 | **`HybridCache`** (caching abstraction - change caching usage) | `NoOpHybridCache`, `UserCacheInvalidationInterceptor`, all services using `HybridCache` (`AdminService`, `AuthenticationService`, `UserService`, `RoleManagementService`), `CustomWebApplicationFactory` mock |
@@ -220,6 +225,17 @@ Quick-reference for "when you change X, also update Y" and "where does X live?"
 <!-- @init:if auth=jwt -->
 | **`$lib/utils/jobs.ts`** (job formatting) | `JobTable.svelte`, `JobInfoCard.svelte`, `JobExecutionHistory.svelte` |
 <!-- @init:end -->
+
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+### Frontend Changes (Blazor)
+
+| When you change... | Also update... |
+|---|---|
+| **`NetRockTemplate.UI/Program.cs`** (services, `AddHttpClient("api")`) | `docs/development.md` if setup steps change |
+| **`NetRockTemplate.UI/NetRockTemplate.UI.csproj`** (project references) | `NetRockTemplate.UI/Dockerfile` COPY lines |
+| **Blazor port or resource name** (AppHost `frontend`) | `Email:FrontendBaseUrl` in `appsettings.Development.json`; production CORS and email links use `public-url` / `PUBLIC_URL` |
+| **API route or response shape used by a page** | The Blazor page or service that calls it (no generated client - the compiler won't catch JSON shape changes) |
 
 <!-- @init:end -->
 ### Cross-Stack Changes
@@ -443,7 +459,7 @@ src/backend/tests/
 | `src/backend/NetRockTemplate.WebApi/appsettings.Testing.json` | Test environment config (disables Hangfire, caching, CORS) |
 | `src/backend/tests/NetRockTemplate.Api.Tests/Fixtures/CustomWebApplicationFactory.cs` | Test host configuration for API tests |
 | `src/backend/NetRockTemplate.ServiceDefaults/Extensions.cs` | Aspire shared: OTEL, service discovery, HTTP resilience defaults |
-<!-- @init:if frontend=svelte -->
+<!-- @init:if frontend=svelte,blazor -->
 | `src/backend/NetRockTemplate.AppHost/Program.cs` | Aspire orchestrator: local dev (PostgreSQL, MinIO, MailPit, API, Frontend) |
 <!-- @init:else -->
 | `src/backend/NetRockTemplate.AppHost/Program.cs` | Aspire orchestrator: local dev (PostgreSQL, MinIO, MailPit, API) |

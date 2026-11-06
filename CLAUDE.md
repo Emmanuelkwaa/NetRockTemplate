@@ -2,7 +2,11 @@
 
 <!-- @init:if frontend=svelte -->
 NETrock - .NET 10 API (Clean Architecture) + SvelteKit frontend (Svelte 5), fully dockerized.
-<!-- @init:else -->
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+NETrock - .NET 10 API (Clean Architecture) + Blazor SSR frontend, fully dockerized.
+<!-- @init:end -->
+<!-- @init:if frontend=none -->
 NETrock - .NET 10 API (Clean Architecture), fully dockerized.
 <!-- @init:end -->
 
@@ -15,7 +19,12 @@ NETrock - .NET 10 API (Clean Architecture), fully dockerized.
 ```
 <!-- @init:if frontend=svelte -->
 Frontend (SvelteKit :5173) → /api/* proxy → Backend API (.NET :8080) → PostgreSQL / MinIO
-<!-- @init:else -->
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+Frontend (Blazor SSR) → named HttpClient "api" → Backend API (.NET :8080) → PostgreSQL / MinIO
+Other clients → Backend API
+<!-- @init:end -->
+<!-- @init:if frontend=none -->
 Clients → Backend API (.NET :8080) → PostgreSQL / MinIO
 <!-- @init:end -->
 Backend layers: WebApi → Application ← Infrastructure → Domain + Shared
@@ -49,6 +58,15 @@ Backend layers: WebApi → Application ← Infrastructure → Domain + Shared
 - Touch targets minimum 44px on all interactive elements
 - Unified UX - reuse existing components and patterns so the app feels like one product, not five
 - No overflow - dialogs, modals, and pages must never show scrollbars. Fit content to viewport.
+
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+### Frontend (Blazor)
+
+- `src/frontend/NetRockTemplate.UI` started from the stock `dotnet new blazor` template (static SSR, no auth). It has no sign-in UI yet - add it per project
+- Static SSR by default - add an interactive render mode only to the component that needs it, and say why in the PR
+- Call the API through `IHttpClientFactory.CreateClient("api")` - never hard-code the API URL
+- Keep `builder.AddServiceDefaults()` and `app.MapDefaultEndpoints()` in `Program.cs` - the container healthcheck uses `/health/live`
 
 <!-- @init:end -->
 ### Cross-Cutting

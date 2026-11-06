@@ -1299,6 +1299,7 @@
         "src/backend/tests",
         "src/backend/.dockerignore",
         ".config/dotnet-tools.json",
+        "CONTRIBUTING.md",
         "docs/architecture.md",
         "docs/before-you-ship.md",
         "docs/features.md",

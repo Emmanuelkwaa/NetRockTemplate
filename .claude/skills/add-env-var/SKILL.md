@@ -2,7 +2,11 @@
 disable-model-invocation: true
 ---
 
+<!-- @init:if frontend=svelte -->
 Adds an environment variable (backend or frontend).
+<!-- @init:else -->
+Adds an environment variable consumed by the backend.
+<!-- @init:end -->
 
 ## Backend-consumed variable
 
@@ -11,6 +15,7 @@ Adds an environment variable (backend or frontend).
 3. If it needs Aspire wiring for local dev: add via `.WithEnvironment()` in `NetRockTemplate.AppHost/Program.cs`
 4. If it needs an Options class: use `/add-options-class`
 
+<!-- @init:if frontend=svelte -->
 ## Frontend-consumed variable
 
 1. Add to `src/frontend/.env.example` (documentation with placeholder)
@@ -26,3 +31,4 @@ Adds an environment variable (backend or frontend).
 4. Import: `import { PUBLIC_VAR } from '$env/static/public';`
 
 > For secrets or keys that differ per environment (like Turnstile site keys), prefer runtime configuration via `$env/dynamic/private` with SSR layout data instead of build-time `PUBLIC_*` args.
+<!-- @init:end -->

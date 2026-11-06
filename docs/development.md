@@ -7,7 +7,11 @@
 <!-- @init:if frontend=svelte -->
 Aspire is the sole local development workflow. It starts all infrastructure (PostgreSQL, MinIO, MailPit) as containers and launches the API and frontend dev server.
 <!-- @init:else -->
+<!-- @init:if frontend=blazor -->
+Aspire is the sole local development workflow. It starts all infrastructure (PostgreSQL, MinIO, MailPit) as containers and launches the API and the Blazor app (`src/frontend/NetRockTemplate.UI`). The Blazor app calls the API through the named `HttpClient` "api", which Aspire service discovery resolves.
+<!-- @init:else -->
 Aspire is the sole local development workflow. It starts all infrastructure (PostgreSQL, MinIO, MailPit) as containers and launches the API.
+<!-- @init:end -->
 <!-- @init:end -->
 
 ```bash

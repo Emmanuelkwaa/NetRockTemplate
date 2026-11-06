@@ -41,7 +41,9 @@ Pre-create the bucket in your provider's console. Restart - no rebuild needed.
 5. **DTOs:** Remove `HasAvatar` from `UserOutput`, `AdminUserOutput`, `UserResponse`, `AdminUserResponse`, mappers
 6. **DI:** Remove `AddFileStorageServices()` and `AddAvatarServices()` from `Program.cs`
 7. **NuGet:** Remove `AWSSDK.S3`, `SkiaSharp`, `SkiaSharp.NativeAssets.Linux.NoDependencies` from `Directory.Packages.props`
+<!-- @init:if frontend=svelte -->
 8. **Frontend:** Remove `AvatarDialog.svelte`, update `ProfileHeader.svelte` and `UserNav.svelte` to remove avatar image
+<!-- @init:end -->
 9. **Config:** Remove `FileStorage` section from all `appsettings*.json`
 10. **Health check:** Remove S3 health check from `HealthCheckExtensions.cs`
 <!-- @init:else -->

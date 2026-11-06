@@ -32,8 +32,10 @@ curl http://localhost:8080/health/live
 
 # Toolchain versions
 dotnet --version
+<!-- @init:if frontend=svelte -->
 node --version
 pnpm --version
+<!-- @init:end -->
 docker compose version
 ```
 
@@ -44,17 +46,21 @@ docker compose version
 | Tool | Required | Check |
 |---|---|---|
 | .NET SDK | 10.0+ (pinned in `global.json`) | `dotnet --version` |
+<!-- @init:if frontend=svelte -->
 | Node.js | 22+ | `node --version` |
 | pnpm | 10.x (managed via corepack) | `pnpm --version` |
+<!-- @init:end -->
 | Docker | Recent with Compose V2 | `docker compose version` |
 | Git | Any recent version | `git --version` |
 
+<!-- @init:if frontend=svelte -->
 If pnpm is not found, enable corepack first:
 
 ```bash
 corepack enable
 pnpm --version
 ```
+<!-- @init:end -->
 
 ---
 
@@ -386,8 +392,12 @@ English is the base locale. The path pattern is `./src/messages/{locale}.json` a
 | Job | Triggered by changes in |
 |---|---|
 | Backend | `src/backend/**`, `global.json` |
+<!-- @init:if frontend=svelte -->
 | Frontend | `src/frontend/**` |
 | Docker | Dockerfiles, `.csproj`, `package.json`, `pnpm-lock.yaml` |
+<!-- @init:else -->
+| Docker | Dockerfiles, `.csproj` |
+<!-- @init:end -->
 
 If your changes don't match these paths, the corresponding jobs won't run.
 

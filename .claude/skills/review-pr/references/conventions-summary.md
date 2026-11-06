@@ -12,6 +12,7 @@
 - `System.Text.Json` only - never Newtonsoft
 - NuGet versions in `Directory.Packages.props` only
 
+<!-- @init:if frontend=svelte -->
 ## Frontend Hard Rules
 
 - Never hand-edit `v1.d.ts` - run `pnpm run api:generate`
@@ -24,6 +25,7 @@
 - Touch targets minimum 44px on all interactive elements
 - No overflow in dialogs - content fits viewport
 - Button layout: `w-full sm:w-auto` with `flex flex-col gap-2 sm:flex-row sm:justify-end`
+<!-- @init:end -->
 
 ## Cross-Cutting Rules
 

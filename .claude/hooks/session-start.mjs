@@ -34,6 +34,7 @@ try {
 }
 // @init:end
 
+// @init:if backend=yes
 // dotnet-ef
 try {
   const tools = run('dotnet tool list -g');
@@ -45,6 +46,7 @@ try {
 } catch {
   console.log('MISSING dotnet-ef (run: dotnet tool restore)');
 }
+// @init:end
 
 // Docker
 try {
