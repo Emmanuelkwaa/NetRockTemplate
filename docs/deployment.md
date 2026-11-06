@@ -15,7 +15,7 @@ aspire deploy --project src/backend/NetRockTemplate.AppHost/NetRockTemplate.AppH
 
 `aspire-output/` is git-ignored because its `.env` holds secrets. `aspire deploy` needs a value for every parameter. Pass them as environment variables (names contain dashes, so use `env`) or answer the prompts. A non-interactive run stops before starting any container and names the first missing parameter.
 
-`aspire deploy` remembers the values in `~/.aspire/deployments/<hash>/production.json` on the deploying machine, in plain text, and reuses them next time. Protect that machine accordingly, and delete that folder to start over.
+`aspire deploy` remembers the values in `~/.aspire/deployments/<hash>/production.json` on the deploying machine, in plain text, and reuses them next time. Saved values take priority over `Parameters__*` environment variables, so changing a variable alone does not change a later deployment. Pass `--clear-cache` to deploy with the values you supply now (it also skips saving them), or delete that folder. Protect that machine accordingly.
 
 ```bash
 env "Parameters__jwt-secret=..." "Parameters__public-url=https://app.example.com" \
