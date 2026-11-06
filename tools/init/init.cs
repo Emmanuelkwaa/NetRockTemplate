@@ -72,8 +72,15 @@ sealed class Settings
         ["frontend"] = Frontend,
         ["backend"] = HasBackend ? "yes" : "no",
         ["keycloak-dev"] = HasKeycloak ? KeycloakDev! : "none",
-        ["keycloak-prod"] = HasKeycloak ? KeycloakProd! : "none"
+        ["keycloak-prod"] = HasKeycloak ? KeycloakProd! : "none",
+        ["keycloak-aspire"] = NeedsAspireKeycloak ? "yes" : "no"
     };
+
+    /// <summary>True when the AppHost runs a Keycloak container: managed development, or managed production published by Aspire.</summary>
+    public bool NeedsAspireKeycloak => HasKeycloak && (KeycloakDev == "managed" || (KeycloakProd == "managed" && Deploy == "aspire"));
+
+    /// <summary>Host port of the managed development Keycloak.</summary>
+    public int KeycloakPort => Port!.Value + 9;
 }
 
 static class Cli
@@ -93,6 +100,7 @@ static class Cli
     /// Keys and values that conditions may use. <c>frontend</c> and <c>backend</c> are derived from the stack,
     /// and <c>blazor</c> projects evaluate with <c>auth=none</c> and <c>database=none</c>.
     /// <c>keycloak-dev</c> and <c>keycloak-prod</c> are <c>none</c> unless auth is Keycloak.
+    /// <c>keycloak-aspire</c> is <c>yes</c> when the AppHost hosts a Keycloak container.
     /// </summary>
     public static readonly Dictionary<string, string[]> ConditionKeys = new()
     {
@@ -102,7 +110,8 @@ static class Cli
         ["frontend"] = ["svelte", "blazor", "none"],
         ["backend"] = ["yes", "no"],
         ["keycloak-dev"] = ["managed", "external", "none"],
-        ["keycloak-prod"] = ["managed", "external", "none"]
+        ["keycloak-prod"] = ["managed", "external", "none"],
+        ["keycloak-aspire"] = ["yes", "no"]
     };
 
     public static int Run(string[] args, string templateRoot)
@@ -414,7 +423,16 @@ static class Generator
             Markers.ApplyToFile(file, options);
         }
 
-        if (s.Auth == "keycloak")
+        if (s.HasKeycloak && s.KeycloakDev == "managed")
+        {
+            var file = $"src/backend/{TemplateName}.WebApi/appsettings.Development.json";
+            JsonEdits.Apply(Path.Combine(output, file), new JsonEdit(file, [], new Dictionary<string, JsonNode?>
+            {
+                ["Authentication:Keycloak:Authority"] = $"http://localhost:{s.KeycloakPort}/realms/{s.Slug}",
+                ["Authentication:Keycloak:ClientId"] = s.Slug
+            }));
+        }
+        else if (s.HasKeycloak)
         {
             var keycloak = new Dictionary<string, JsonNode?>();
             if (!string.IsNullOrEmpty(s.KeycloakAuthority)) keycloak["Authentication:Keycloak:Authority"] = s.KeycloakAuthority;
@@ -438,6 +456,12 @@ static class Generator
 
         Ui.Step("Generating secrets");
         ReplaceSecrets(output, manifest);
+
+        if (s.HasKeycloak && (s.KeycloakDev == "managed" || s.KeycloakProd == "managed"))
+        {
+            Ui.Step("Generating Keycloak realm files");
+            KeycloakRealm.Write(s, output);
+        }
 
         if (s.Frontend == "svelte")
         {
@@ -596,7 +620,15 @@ static class Generator
             secrets.Add(("Parameters:seed-user-password", s.Password!));
         }
 
-        if (s.Auth == "keycloak" && !string.IsNullOrEmpty(s.KeycloakClientSecret))
+        if (s.HasKeycloak && s.KeycloakDev == "managed")
+        {
+            // The local realm reads these through ${...} placeholders, so no secret lands in a tracked file.
+            secrets.Add(("Parameters:keycloak-client-secret", RandomSecret(48)));
+            secrets.Add(("Parameters:keycloak-admin-password", RandomSecret(32)));
+            secrets.Add(("Parameters:keycloak-test-user-email", s.Email!));
+            secrets.Add(("Parameters:keycloak-test-user-password", s.Password!));
+        }
+        else if (s.HasKeycloak && !string.IsNullOrEmpty(s.KeycloakClientSecret))
         {
             secrets.Add(("Parameters:keycloak-client-secret", s.KeycloakClientSecret));
         }
@@ -723,6 +755,94 @@ static class BlazorProject
     }
 }
 
+/// <summary>
+/// Writes the Keycloak realm imports for managed modes: <c>keycloak/dev/realm.json</c> (local test user,
+/// localhost redirect URIs) and <c>keycloak/prod/realm.json</c> (no users, redirect URIs from the environment).
+/// Secrets are <c>${...}</c> placeholders that Keycloak fills from environment variables at import.
+/// </summary>
+static class KeycloakRealm
+{
+    public static void Write(Settings s, string output)
+    {
+        if (s.KeycloakDev == "managed")
+        {
+            var (callbackBase, webOrigin) = s.Frontend switch
+            {
+                "svelte" => ($"http://localhost:{s.Port}", $"http://localhost:{s.Port}"),
+                "blazor" => ($"http://localhost:{s.ApiPort}", $"http://localhost:{s.Port}"),
+                _ => ($"http://localhost:{s.ApiPort}", $"http://localhost:{s.ApiPort}")
+            };
+            var realm = Realm(s, callbackBase, webOrigin);
+            realm["users"] = new JsonArray(new JsonObject
+            {
+                ["username"] = "${KC_TEST_USER_EMAIL}",
+                ["email"] = "${KC_TEST_USER_EMAIL}",
+                ["emailVerified"] = true,
+                ["firstName"] = "Test",
+                ["lastName"] = "User",
+                ["enabled"] = true,
+                ["credentials"] = new JsonArray(new JsonObject
+                {
+                    ["type"] = "password",
+                    ["value"] = "${KC_TEST_USER_PASSWORD}",
+                    ["temporary"] = false
+                })
+            });
+            Save(Path.Combine(output, "keycloak", "dev", "realm.json"), realm);
+            Ui.Sub($"keycloak/dev/realm.json (realm {s.Slug}, client {s.Slug}, test user)");
+        }
+
+        if (s.KeycloakProd == "managed")
+        {
+            Save(Path.Combine(output, "keycloak", "prod", "realm.json"), Realm(s, "${KC_CALLBACK_BASE_URL}", "${KC_WEB_ORIGIN}"));
+            Ui.Sub("keycloak/prod/realm.json (no users; URLs and secret from the environment)");
+        }
+    }
+
+    private static JsonObject Realm(Settings s, string callbackBase, string webOrigin) => new()
+    {
+        ["realm"] = s.Slug,
+        ["enabled"] = true,
+        ["clients"] = new JsonArray(new JsonObject
+        {
+            ["clientId"] = s.Slug,
+            ["name"] = s.Name,
+            ["enabled"] = true,
+            ["protocol"] = "openid-connect",
+            ["publicClient"] = false,
+            ["clientAuthenticatorType"] = "client-secret",
+            ["secret"] = "${KC_CLIENT_SECRET}",
+            ["standardFlowEnabled"] = true,
+            ["directAccessGrantsEnabled"] = false,
+            ["implicitFlowEnabled"] = false,
+            ["serviceAccountsEnabled"] = false,
+            ["redirectUris"] = new JsonArray($"{callbackBase}/api/auth/keycloak/callback"),
+            ["webOrigins"] = new JsonArray(webOrigin),
+            ["attributes"] = new JsonObject { ["pkce.code.challenge.method"] = "S256" },
+            // The API rejects tokens whose aud is not its client ID; Keycloak's default audience is "account".
+            ["protocolMappers"] = new JsonArray(new JsonObject
+            {
+                ["name"] = "audience",
+                ["protocol"] = "openid-connect",
+                ["protocolMapper"] = "oidc-audience-mapper",
+                ["config"] = new JsonObject
+                {
+                    ["included.client.audience"] = s.Slug,
+                    ["access.token.claim"] = "true",
+                    ["id.token.claim"] = "false",
+                    ["introspection.token.claim"] = "true"
+                }
+            })
+        })
+    };
+
+    private static void Save(string path, JsonObject realm)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, realm.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
+    }
+}
+
 static class Migrations
 {
     public static void Regenerate(Settings s, string output)
@@ -778,10 +898,16 @@ static class NextSteps
             Ui.Sub("Migrations do not run automatically against an external database. See docs/deployment.md.");
         }
 
-        if (s.Auth == "keycloak")
+        if (s.HasKeycloak && s.KeycloakDev == "managed")
+        {
+            Ui.Warn("Keycloak (development, managed): Aspire runs Keycloak with the realm from keycloak/dev/realm.json.");
+            Ui.Sub($"Sign in as the test user {s.Email} (password in AppHost user secrets: Parameters:keycloak-test-user-password)");
+            Ui.Sub($"Admin console: http://localhost:{s.KeycloakPort}/admin (user admin, password in Parameters:keycloak-admin-password)");
+        }
+        else if (s.HasKeycloak)
         {
             var baseUrl = s.Frontend == "svelte" ? $"http://localhost:{s.Port}" : $"http://localhost:{s.ApiPort}";
-            Ui.Warn("Keycloak: create a confidential OpenID Connect client in your realm with:");
+            Ui.Warn("Keycloak (development, external): create a confidential OpenID Connect client in your realm with:");
             Ui.Sub("Client authentication on, Standard flow on, PKCE method S256");
             Ui.Sub($"Valid redirect URI:  {baseUrl}/api/auth/keycloak/callback");
             Ui.Sub($"Web origin:          {(s.Frontend == "none" ? baseUrl : $"http://localhost:{s.Port}")}");
@@ -795,9 +921,24 @@ static class NextSteps
             {
                 Ui.Sub($"Store the secret: dotnet user-secrets set Parameters:keycloak-client-secret <secret> --project src/backend/{s.Name}.AppHost");
             }
-
-            Ui.Sub("Full guide: docs/keycloak.md");
         }
+
+        if (s.HasKeycloak && s.KeycloakProd == "external")
+        {
+            Ui.Warn("Keycloak (production, external): the production realm is required before deploying.");
+            Ui.Sub(s.Deploy == "compose"
+                ? "Set Authentication__Keycloak__Authority, ClientId and ClientSecret in .env; docker compose stops until they are set."
+                : "Supply the keycloak-authority, keycloak-client-id and keycloak-client-secret parameters; aspire deploy stops until they are set.");
+        }
+        else if (s.HasKeycloak)
+        {
+            Ui.Warn("Keycloak (production, managed): the stack runs its own Keycloak with keycloak/prod/realm.json (no users).");
+            Ui.Sub(s.Deploy == "compose"
+                ? "Set the KEYCLOAK_* values and the client secret in .env before docker compose up. See docs/deployment.md."
+                : "Supply the keycloak-* parameters at aspire deploy. See docs/deployment.md.");
+        }
+
+        if (s.HasKeycloak) Ui.Sub("Full guide: docs/keycloak.md");
 
         if (s.Deploy == "compose")
         {

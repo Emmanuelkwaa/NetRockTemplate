@@ -14,6 +14,9 @@ var minioPort = frontendPort + 5;
 var minioConsolePort = frontendPort + 6;
 var mailpitSmtpPort = frontendPort + 7;
 var mailpitHttpPort = frontendPort + 8;
+// @init:if keycloak-dev=managed uncomment
+// var keycloakPort = frontendPort + 9;
+// @init:end
 // @init:end
 
 // @init:if deploy=aspire uncomment
@@ -129,6 +132,22 @@ if (builder.ExecutionContext.IsRunMode)
             .WithEnvironment("Seed__Users__0__Password", builder.AddParameter("seed-user-password", secret: true))
             .WithEnvironment("Seed__Users__0__Role", "Superuser");
     }
+// @init:end
+// @init:if keycloak-dev=managed uncomment
+//
+//     // Local Keycloak with the realm from keycloak/dev (client, audience mapper, test user).
+//     // The realm reads its secrets from these environment variables. Init stored them in AppHost user secrets.
+//     // The realm is imported once into the data volume; remove the volume to re-import it.
+//     var keycloak = builder.AddKeycloak("keycloak", keycloakPort,
+//             adminPassword: builder.AddParameter("keycloak-admin-password", secret: true))
+//         .WithImageTag("26.4.7")
+//         .WithDataVolume("net-rock-template-keycloak-data")
+//         .WithRealmImport("../../../keycloak/dev")
+//         .WithEnvironment("KC_CLIENT_SECRET", keycloakClientSecret)
+//         .WithEnvironment("KC_TEST_USER_EMAIL", builder.AddParameter("keycloak-test-user-email"))
+//         .WithEnvironment("KC_TEST_USER_PASSWORD", builder.AddParameter("keycloak-test-user-password", secret: true));
+//
+//     api.WaitFor(keycloak);
 // @init:end
 // @init:if frontend=svelte uncomment
 //
