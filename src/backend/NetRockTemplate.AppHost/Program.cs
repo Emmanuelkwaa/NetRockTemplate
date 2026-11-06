@@ -168,6 +168,12 @@ if (builder.ExecutionContext.IsRunMode)
 // @init:if database=managed
 //     api.WithEnvironment("Database__MigrateOnStartup", "true");
 // @init:end
+// @init:if keycloak-prod=external
+//
+//     // Production realm of the existing Keycloak server. No defaults: deployment stops until they are set.
+//     api.WithEnvironment("Authentication__Keycloak__Authority", builder.AddParameter("keycloak-authority"))
+//         .WithEnvironment("Authentication__Keycloak__ClientId", builder.AddParameter("keycloak-client-id"));
+// @init:end
 // @init:if auth=keycloak frontend=blazor
 //
 //     // Keycloak redirects back to the API, which is public next to the Blazor frontend.

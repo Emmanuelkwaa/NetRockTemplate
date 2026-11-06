@@ -27,13 +27,13 @@ services:
       Seed__Users__0__Password: ${Seed__Users__0__Password:-}
       Seed__Users__0__Role: Superuser
 # @init:end
-# @init:if auth=keycloak
-      Authentication__Keycloak__Authority: ${Authentication__Keycloak__Authority}
-      Authentication__Keycloak__ClientId: ${Authentication__Keycloak__ClientId}
-      Authentication__Keycloak__ClientSecret: ${Authentication__Keycloak__ClientSecret}
-# @init:if frontend=blazor
-      Authentication__Keycloak__CallbackBaseUrl: ${API_PUBLIC_URL}
+# @init:if keycloak-prod=external
+      Authentication__Keycloak__Authority: ${Authentication__Keycloak__Authority:?Set the Keycloak realm URL in .env. See docs/keycloak.md}
+      Authentication__Keycloak__ClientId: ${Authentication__Keycloak__ClientId:?Set the Keycloak client ID in .env. See docs/keycloak.md}
+      Authentication__Keycloak__ClientSecret: ${Authentication__Keycloak__ClientSecret:?Set the Keycloak client secret in .env. See docs/keycloak.md}
 # @init:end
+# @init:if auth=keycloak frontend=blazor
+      Authentication__Keycloak__CallbackBaseUrl: ${API_PUBLIC_URL}
 # @init:end
       FileStorage__Endpoint: ${FileStorage__Endpoint}
       FileStorage__AccessKey: ${FileStorage__AccessKey}

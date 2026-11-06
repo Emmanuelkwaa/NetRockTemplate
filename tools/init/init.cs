@@ -32,6 +32,8 @@ sealed class Settings
     public string? KeycloakAuthority { get; set; }
     public string? KeycloakClientId { get; set; }
     public string? KeycloakClientSecret { get; set; }
+    public string? KeycloakDev { get; set; }
+    public string? KeycloakProd { get; set; }
     public bool Yes { get; set; }
     public bool? Migration { get; set; }
     public bool? Commit { get; set; }
@@ -40,10 +42,15 @@ sealed class Settings
     public int ApiPort => Port!.Value + 2;
 
     /// <summary>The selected options as one line, for the initial commit message.</summary>
-    public string Describe() => HasBackend
-        ? $"stack={Stack}, auth={Auth}, deploy={Deploy}, database={Database}"
-        : $"stack={Stack}, deploy={Deploy}";
+    public string Describe() => !HasBackend
+        ? $"stack={Stack}, deploy={Deploy}"
+        : HasKeycloak
+            ? $"stack={Stack}, auth={Auth}, keycloak-dev={KeycloakDev}, keycloak-prod={KeycloakProd}, deploy={Deploy}, database={Database}"
+            : $"stack={Stack}, auth={Auth}, deploy={Deploy}, database={Database}";
     public string Slug => Regex.Replace(Name!, "([a-z0-9])([A-Z])", "$1-$2").ToLowerInvariant();
+
+    /// <summary>True when the project uses Keycloak (only possible with a backend).</summary>
+    public bool HasKeycloak => HasBackend && Auth == "keycloak";
 
     /// <summary>True for every stack except <c>blazor</c>, which has no backend API.</summary>
     public bool HasBackend => Stack != "blazor";
@@ -63,7 +70,9 @@ sealed class Settings
         ["deploy"] = Deploy!,
         ["database"] = HasBackend ? Database! : "none",
         ["frontend"] = Frontend,
-        ["backend"] = HasBackend ? "yes" : "no"
+        ["backend"] = HasBackend ? "yes" : "no",
+        ["keycloak-dev"] = HasKeycloak ? KeycloakDev! : "none",
+        ["keycloak-prod"] = HasKeycloak ? KeycloakProd! : "none"
     };
 }
 
@@ -75,12 +84,15 @@ static class Cli
         ["stack"] = ["api-svelte", "api-blazor", "api", "blazor"],
         ["auth"] = ["jwt", "keycloak", "none"],
         ["deploy"] = ["aspire", "compose"],
-        ["database"] = ["managed", "external"]
+        ["database"] = ["managed", "external"],
+        ["keycloak-dev"] = ["managed", "external"],
+        ["keycloak-prod"] = ["managed", "external"]
     };
 
     /// <summary>
     /// Keys and values that conditions may use. <c>frontend</c> and <c>backend</c> are derived from the stack,
     /// and <c>blazor</c> projects evaluate with <c>auth=none</c> and <c>database=none</c>.
+    /// <c>keycloak-dev</c> and <c>keycloak-prod</c> are <c>none</c> unless auth is Keycloak.
     /// </summary>
     public static readonly Dictionary<string, string[]> ConditionKeys = new()
     {
@@ -88,7 +100,9 @@ static class Cli
         ["deploy"] = ["aspire", "compose"],
         ["database"] = ["managed", "external", "none"],
         ["frontend"] = ["svelte", "blazor", "none"],
-        ["backend"] = ["yes", "no"]
+        ["backend"] = ["yes", "no"],
+        ["keycloak-dev"] = ["managed", "external", "none"],
+        ["keycloak-prod"] = ["managed", "external", "none"]
     };
 
     public static int Run(string[] args, string templateRoot)
@@ -172,6 +186,8 @@ static class Cli
                 case "--keycloak-authority": s.KeycloakAuthority = Value(); break;
                 case "--keycloak-client-id": s.KeycloakClientId = Value(); break;
                 case "--keycloak-client-secret": s.KeycloakClientSecret = Value(); break;
+                case "--keycloak-dev": s.KeycloakDev = Choice("keycloak-dev", Value()); break;
+                case "--keycloak-prod": s.KeycloakProd = Choice("keycloak-prod", Value()); break;
                 case "-y" or "--yes": s.Yes = true; break;
                 case "--no-migration": s.Migration = false; break;
                 case "--no-commit": s.Commit = false; break;
@@ -216,14 +232,19 @@ static class Cli
                   --deploy MODE          aspire | compose               (default: aspire)
                   --database MODE        managed | external             (default: managed, not for blazor)
 
-            JWT:
-              -e, --email EMAIL          Superuser email (default: superuser@test.com)
-                  --password PASS        Superuser password (default: Superuser123!)
+            JWT, or Keycloak with --keycloak-dev managed:
+              -e, --email EMAIL          Superuser (jwt) or local test user (Keycloak) email (default: superuser@test.com)
+                  --password PASS        Its password (default: Superuser123!), stored in AppHost user secrets
 
-            Keycloak:
-                  --keycloak-authority URL      Realm URL, e.g. https://auth.example.com/realms/my-realm
-                  --keycloak-client-id ID       Confidential client ID
-                  --keycloak-client-secret S    Client secret (stored in user secrets, never in files)
+            Keycloak (--auth keycloak only):
+                  --keycloak-dev MODE    managed | external   Where Keycloak runs in development (default: external)
+                  --keycloak-prod MODE   managed | external   Where Keycloak runs in production (default: external)
+                                           managed   the project runs its own Keycloak (realm generated by init)
+                                           external  an existing server; production realm settings are required at deployment
+                  --keycloak-authority URL      Development realm URL, e.g. https://auth.example.com/realms/my-realm
+                  --keycloak-client-id ID       Development client ID
+                  --keycloak-client-secret S    Development client secret (stored in user secrets, never in files)
+                                                The three above apply to --keycloak-dev external only
 
             Behavior:
               -y, --yes                  Accept defaults without prompting
@@ -271,15 +292,32 @@ static class Prompts
         s.Deploy ??= s.Yes ? "aspire" : Ui.Choose("Production deployment", Cli.Choices["deploy"], "aspire");
         if (s.HasBackend) s.Database ??= s.Yes ? "managed" : Ui.Choose("PostgreSQL", Cli.Choices["database"], "managed");
 
-        if (s.Auth == "jwt")
+        if (s.HasKeycloak)
         {
-            s.Email ??= s.Yes ? "superuser@test.com" : Ui.Ask("Superuser email", "superuser@test.com");
-            s.Password ??= s.Yes ? "Superuser123!" : Ui.AskSecret("Superuser password", "Superuser123!");
+            s.KeycloakDev ??= s.Yes ? "external" : Ui.Choose("Keycloak in development", Cli.Choices["keycloak-dev"], "external");
+            s.KeycloakProd ??= s.Yes ? "external" : Ui.Choose("Keycloak in production", Cli.Choices["keycloak-prod"], "external");
+        }
+        else if (s.KeycloakDev is not null || s.KeycloakProd is not null)
+        {
+            throw new InitException("--keycloak-dev and --keycloak-prod only apply to --auth keycloak");
+        }
+
+        var managedDev = s.HasKeycloak && s.KeycloakDev == "managed";
+        if (s.Auth == "jwt" || managedDev)
+        {
+            var who = s.Auth == "jwt" ? "Superuser" : "Keycloak test user";
+            s.Email ??= s.Yes ? "superuser@test.com" : Ui.Ask($"{who} email", "superuser@test.com");
+            s.Password ??= s.Yes ? "Superuser123!" : Ui.AskSecret($"{who} password", "Superuser123!");
         }
         else if (s.Email is not null || s.Password is not null)
         {
-            Ui.Warn("--email and --password only apply to --auth jwt and are ignored");
+            Ui.Warn("--email and --password only apply to --auth jwt or --keycloak-dev managed and are ignored");
             s.Email = s.Password = null;
+        }
+
+        if (managedDev && (s.KeycloakAuthority ?? s.KeycloakClientId ?? s.KeycloakClientSecret) is not null)
+        {
+            throw new InitException("--keycloak-authority, --keycloak-client-id and --keycloak-client-secret do not apply to --keycloak-dev managed (init generates the realm)");
         }
 
         if (s.Auth != "keycloak" && (s.KeycloakAuthority ?? s.KeycloakClientId ?? s.KeycloakClientSecret) is not null)
@@ -288,7 +326,7 @@ static class Prompts
             s.KeycloakAuthority = s.KeycloakClientId = s.KeycloakClientSecret = null;
         }
 
-        if (s.Auth == "keycloak")
+        if (s.HasKeycloak && !managedDev)
         {
             s.KeycloakAuthority ??= s.Yes ? "" : Ui.Ask("Keycloak realm URL (e.g. https://auth.example.com/realms/my-realm)", "");
             s.KeycloakClientId ??= s.Yes ? "" : Ui.Ask("Keycloak client ID", "");
@@ -1170,10 +1208,12 @@ static class Ui
         Console.WriteLine($"  Stack:       {s.Stack}");
         Console.WriteLine(s.HasBackend ? $"  Ports:       frontend {s.Port}, API {s.ApiPort}" : $"  Port:        {s.Port}");
         if (s.HasBackend) Console.WriteLine($"  Auth:        {s.Auth}");
+        if (s.HasKeycloak) Console.WriteLine($"  Keycloak:    development {s.KeycloakDev}, production {s.KeycloakProd}");
         Console.WriteLine($"  Deploy:      {s.Deploy}");
         if (s.HasBackend) Console.WriteLine($"  Database:    {s.Database}");
         if (s.Auth == "jwt") Console.WriteLine($"  Superuser:   {s.Email}");
-        if (s.Auth == "keycloak") Console.WriteLine($"  Keycloak:    {(string.IsNullOrEmpty(s.KeycloakAuthority) ? "(set later)" : s.KeycloakAuthority)}");
+        if (s.HasKeycloak && s.KeycloakDev == "managed") Console.WriteLine($"  Test user:   {s.Email}");
+        if (s.HasKeycloak && s.KeycloakDev == "external") Console.WriteLine($"  Dev realm:   {(string.IsNullOrEmpty(s.KeycloakAuthority) ? "(set later)" : s.KeycloakAuthority)}");
         Console.WriteLine($"  Output:      {s.Output}");
         var migration = s.HasBackend ? $"Migration:   {(s.Migration == true ? "yes" : "no")}, " : "";
         Console.WriteLine($"  {migration}git: {(s.Commit == true ? "yes" : "no")}, launch Aspire: {(s.Aspire == true ? "yes" : "no")}");
