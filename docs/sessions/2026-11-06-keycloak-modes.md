@@ -48,6 +48,5 @@ Both default to `external`, so existing projects are unchanged apart from produc
 
 ## Follow-ups
 
-- An `http://` realm URL outside Development fails on every request (including health checks) instead of at startup.
-- Aspire-published compose has no healthchecks for project resources, and publishes Keycloak's management port (9000) on an ephemeral host port.
+- Aspire-published compose has no healthchecks for project resources.
 - The Mac ran out of disk space during testing (Docker's disk image was 67 GB); pruning Docker build cache freed it.
