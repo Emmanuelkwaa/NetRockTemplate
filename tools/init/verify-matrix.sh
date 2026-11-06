@@ -110,6 +110,16 @@ secrets_absent() {
     done <<< "$values"
 }
 
+# Aspire-generated compose must not publish a container's port 9000 (Keycloak's management
+# interface) on the host. "expose" entries are fine: they stay on the compose network.
+no_published_management_port() {
+    local published
+    published="$(awk '/^    ports:/{p=1;next} /^    [a-z_]+:/{p=0} p && /^      - /{print}' "$1/aspire-output/docker-compose.yaml")"
+    if grep -E '(^|[":])9000"?$' <<< "$published"; then
+        echo "port 9000 is published to the host"; return 1
+    fi
+}
+
 prod_realm_has_no_users() {
     python3 -c "import json,sys; r=json.load(open(sys.argv[1])); sys.exit(1 if r.get('users') else 0)" "$1/keycloak/prod/realm.json"
 }
@@ -251,6 +261,7 @@ check_matrix() {
                             # Run from the project: aspire writes aspire.config.json into the current folder.
                             step "$combo aspire publish" bash -c "cd '$dir' && aspire publish --project src/backend/VerifyApp.AppHost/VerifyApp.AppHost.csproj -o aspire-output --non-interactive"
                             step "$combo no own compose" test ! -e "$dir/docker-compose.yaml"
+                            step "$combo no published management port" no_published_management_port "$dir"
                         else
                             step "$combo compose config" bash -c "$(declare -f fill_env); fill_env '$dir' && cd '$dir' && docker compose config -q"
                         fi
