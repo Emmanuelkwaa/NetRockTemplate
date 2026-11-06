@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NetRockTemplate.Application.Cookies.Constants;
 using NetRockTemplate.Application.Features.Authentication;
@@ -24,8 +25,8 @@ public static class ServiceCollectionExtensions
         /// </summary>
         /// <param name="configuration">The application configuration.</param>
         /// <param name="environment">
-        /// The host environment. HTTPS metadata is required outside Development, except for
-        /// <see cref="KeycloakOptions.InternalUrl"/>, which is an internal network address.
+        /// The host environment. Outside Development the Authority must use https (checked at startup) and
+        /// HTTPS metadata is required, except for <see cref="KeycloakOptions.InternalUrl"/>, an internal network address.
         /// </param>
         /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddKeycloakAuthentication(IConfiguration configuration, IHostEnvironment environment)
@@ -34,6 +35,7 @@ public static class ServiceCollectionExtensions
                 .BindConfiguration(KeycloakOptions.SectionName)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
+            services.AddSingleton<IValidateOptions<KeycloakOptions>>(new KeycloakEnvironmentOptionsValidator(environment));
 
             var keycloak = configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>() ?? new KeycloakOptions();
 
