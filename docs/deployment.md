@@ -15,7 +15,7 @@ aspire deploy --project src/backend/NetRockTemplate.AppHost/NetRockTemplate.AppH
 
 `aspire-output/` is git-ignored because its `.env` holds secrets. `aspire deploy` needs a value for every parameter. Pass them as environment variables (names contain dashes, so use `env`) or answer the prompts. A non-interactive run stops before starting any container and names the first missing parameter.
 
-`aspire deploy` remembers the values in `~/.aspire/deployments/<hash>/production.json` on the deploying machine, in plain text, and reuses them next time. Protect that machine accordingly, and delete that folder to start over.
+`aspire deploy` remembers the values in `~/.aspire/deployments/<hash>/production.json` on the deploying machine, in plain text, and reuses them next time. Saved values take priority over `Parameters__*` environment variables, so changing a variable alone does not change a later deployment. Pass `--clear-cache` to deploy with the values you supply now (it also skips saving them), or delete that folder. Protect that machine accordingly.
 
 ```bash
 env "Parameters__jwt-secret=..." "Parameters__public-url=https://app.example.com" \
@@ -148,7 +148,8 @@ The stack runs Keycloak 26.4.7 in production mode (`start --import-realm`). It a
 - **Internal calls**: the API reaches Keycloak at `http://keycloak:8080` (`Authentication__Keycloak__InternalUrl`). `KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true` makes Keycloak answer those calls with internal endpoints.
 - **Realm**: `keycloak/prod/realm.json` defines the realm and client with no users. The client secret (`KC_CLIENT_SECRET`), redirect URI base and web origin come from the environment. It is imported on the first start only; an existing realm is never overwritten, so changes made in the admin console survive redeploys. Create users in the admin console or connect an identity provider there.
 - **Admin**: the bootstrap admin (`KEYCLOAK_ADMIN_USERNAME` / `KEYCLOAK_ADMIN_PASSWORD`) is for the master realm. Replace it with a permanent admin after the first sign-in.
-- **Health**: health endpoints are on the management port (9000). Own compose waits for `/health/ready` before starting the API.
+- **Health**: health endpoints are on the management port (9000), which is reachable only on the compose network, never published on the host. Own compose waits for `/health/ready` before starting the API.
+- **TLS required**: the API refuses to start if the public URL is `http://` (outside Development), so the stack only runs behind a TLS-terminating proxy. The internal address `http://keycloak:8080` is allowed.
 <!-- @init:if database=managed -->
 - **Database**: Keycloak uses its own `keycloak` database and login on the stack's PostgreSQL server. `keycloak/postgres-init/01-keycloak.sh` creates them, but PostgreSQL runs init scripts only when its data volume is empty. If the volume already exists, run the script once by hand (the postgres service already has `KEYCLOAK_DB_PASSWORD`):
 

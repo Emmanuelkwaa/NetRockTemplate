@@ -96,7 +96,9 @@ Store the development secret:
 dotnet user-secrets set Parameters:keycloak-client-secret "<secret>" --project src/backend/NetRockTemplate.AppHost
 ```
 
-The AppHost passes it to the API as `Authentication__Keycloak__ClientSecret`. HTTPS metadata is required outside Development.
+The AppHost passes it to the API as `Authentication__Keycloak__ClientSecret`.
+
+Outside Development, `Authority` must use `https`. An `http://` realm URL stops the API at startup with a validation error naming `Authentication:Keycloak:Authority`. Only `InternalUrl` may use plain `http`, because it is an internal network address.
 
 ## Troubleshooting
 
@@ -105,4 +107,4 @@ The AppHost passes it to the API as `Authentication__Keycloak__ClientSecret`. HT
 | 401 on every request with a valid login | Missing audience mapper, or `Authority` differs from the token's `iss` (trailing slash, hostname, or `http` vs `https`). |
 | Keycloak shows "Invalid parameter: redirect_uri" | The callback URL is not in **Valid redirect URIs**, or `Email:FrontendBaseUrl` (or `CallbackBaseUrl`) is wrong. |
 | Callback returns 400 "sign-in request expired" | The login took longer than `LoginStateLifetime` (10 minutes), or the browser blocked the login-state cookie. |
-| API fails at startup with an options validation error | `Authority`, `ClientId` or `ClientSecret` is empty. |
+| API fails at startup with an options validation error | `Authority`, `ClientId` or `ClientSecret` is empty, or `Authority` uses `http://` outside Development. |

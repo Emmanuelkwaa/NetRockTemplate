@@ -230,7 +230,13 @@ if (builder.ExecutionContext.IsRunMode)
 //         .WithEnvironment("KC_CALLBACK_BASE_URL", publicUrl)
 // @init:end
 //         .WithEnvironment("KC_WEB_ORIGIN", publicUrl)
-//         .WithExternalHttpEndpoints();
+//         .WithExternalHttpEndpoints()
+//         // The management interface (9000: health) stays on the compose network; Aspire would publish it on the host.
+//         .PublishAsDockerComposeService((_, service) =>
+//         {
+//             service.Ports.RemoveAll(port => port == "9000" || port.EndsWith(":9000", StringComparison.Ordinal));
+//             service.Expose.Add("9000");
+//         });
 // @init:if database=managed
 //
 //     // Creates Keycloak's database and login when the Postgres volume is empty.
