@@ -574,7 +574,8 @@ static class Generator
             (new Regex(TemplateName.ToLowerInvariant()), s.Name!.ToLowerInvariant()),
             // Ports only after ':', whitespace or a quote, so digits inside hashes never match.
             (new Regex(@"(?<=[:\s`""'])13000(?![0-9A-Za-z])"), s.Port!.Value.ToString()),
-            (new Regex(@"(?<=[:\s`""'])13002(?![0-9A-Za-z])"), s.ApiPort.ToString())
+            (new Regex(@"(?<=[:\s`""'])13002(?![0-9A-Za-z])"), s.ApiPort.ToString()),
+            (new Regex(@"(?<=[:\s`""'])13009(?![0-9A-Za-z])"), s.KeycloakPort.ToString())
         };
 
         foreach (var file in textFiles.Where(File.Exists).Where(f => !IsLockFile(f)))
