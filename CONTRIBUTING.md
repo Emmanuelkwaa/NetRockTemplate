@@ -42,9 +42,11 @@ Not every feature belongs in a template. NETrock provides a solid foundation - f
 # Backend
 dotnet build src/backend/NetRockTemplate.slnx
 dotnet test src/backend/NetRockTemplate.slnx -c Release
+<!-- @init:if frontend=svelte -->
 
 # Frontend
 cd src/frontend && pnpm run test && pnpm run format && pnpm run lint && pnpm run check
+<!-- @init:end -->
 ```
 
 4. **Open a PR** against `master` with a clear description of what changed and why
@@ -70,6 +72,7 @@ These are non-negotiable. PRs that don't follow them will be requested to change
 - NuGet versions in `Directory.Packages.props` only - never in `.csproj` files
 - All tests must pass
 
+<!-- @init:if frontend=svelte -->
 ### Frontend (SvelteKit)
 
 - Svelte 5 Runes only: `$props`, `$state`, `$derived`, `$effect` - never `export let`
@@ -79,6 +82,7 @@ These are non-negotiable. PRs that don't follow them will be requested to change
 - Feature folders in `$lib/components/{feature}/` with barrel `index.ts`
 - Never hand-edit `v1.d.ts` - regenerate with `pnpm run api:generate`
 
+<!-- @init:end -->
 ### Cross-Cutting
 
 - Security restrictive by default - deny first, open selectively
@@ -113,7 +117,9 @@ These are non-negotiable. PRs that don't follow them will be requested to change
 - Use `.claude/skills/` procedures when adding entities, endpoints, or pages (type `/` to list available skills)
 - Check [FILEMAP.md](FILEMAP.md) for change impact - "when you change X, also update Y"
 - The architecture tests will catch dependency violations at build time
+<!-- @init:if frontend=svelte -->
 - Run `pnpm run api:generate` after any backend API change
+<!-- @init:end -->
 
 ## Questions?
 

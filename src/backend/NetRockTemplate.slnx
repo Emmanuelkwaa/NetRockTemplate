@@ -1,19 +1,31 @@
 <Solution>
   <Folder Name="/solution items/">
+    <!-- @init:if backend=yes -->
     <File Path="../../.config/dotnet-tools.json" />
+    <!-- @init:end -->
     <File Path="../../global.json" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
+    <!-- @init:if backend=yes -->
     <File Path="NetRockTemplate.WebApi/Dockerfile" />
+    <!-- @init:end -->
     <File Path="nuget.config" />
   </Folder>
+  <!-- @init:if backend=yes -->
   <Project Path="NetRockTemplate.Application/NetRockTemplate.Application.csproj" />
   <Project Path="NetRockTemplate.Domain/NetRockTemplate.Domain.csproj" />
   <Project Path="NetRockTemplate.Infrastructure/NetRockTemplate.Infrastructure.csproj" />
   <Project Path="NetRockTemplate.Shared/NetRockTemplate.Shared.csproj" />
   <Project Path="NetRockTemplate.WebApi/NetRockTemplate.WebApi.csproj" />
+  <!-- @init:end -->
   <Project Path="NetRockTemplate.ServiceDefaults/NetRockTemplate.ServiceDefaults.csproj" />
   <Project Path="NetRockTemplate.AppHost/NetRockTemplate.AppHost.csproj" />
+  <!-- @init:if frontend=blazor uncomment -->
+  <!-- <Folder Name="/frontend/"> -->
+  <!--   <Project Path="../frontend/NetRockTemplate.UI/NetRockTemplate.UI.csproj" /> -->
+  <!-- </Folder> -->
+  <!-- @init:end -->
+  <!-- @init:if backend=yes -->
   <Folder Name="/tools/">
     <Project Path="HealthProbe/HealthProbe.csproj" />
   </Folder>
@@ -23,4 +35,5 @@
     <Project Path="tests/NetRockTemplate.Api.Tests/NetRockTemplate.Api.Tests.csproj" />
     <Project Path="tests/NetRockTemplate.Architecture.Tests/NetRockTemplate.Architecture.Tests.csproj" />
   </Folder>
+  <!-- @init:end -->
 </Solution>

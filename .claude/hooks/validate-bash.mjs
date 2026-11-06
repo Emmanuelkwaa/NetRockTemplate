@@ -15,10 +15,12 @@ const command = input?.tool_input?.command;
 if (!command) process.exit(0);
 
 const blocks = [
+// @init:if frontend=svelte
   {
     pattern: /(^|[;&|])\s*npm\s+install\b/,
     msg: 'Use pnpm, not npm. Run: pnpm install',
   },
+// @init:end
   {
     pattern: /git\s+push\s+.*--force(?!-)/,
     msg: 'Force push blocked. Use --force-with-lease if you must, or ask the user first.',

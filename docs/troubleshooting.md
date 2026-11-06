@@ -11,7 +11,7 @@
 <!-- @init:end -->
 - [Aspire (Local Development)](#aspire-local-development)
 - [Backend Development](#backend-development)
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - [Frontend Development](#frontend-development)
 <!-- @init:end -->
 <!-- @init:if auth=jwt -->
@@ -32,8 +32,10 @@ curl http://localhost:8080/health/live
 
 # Toolchain versions
 dotnet --version
+<!-- @init:if frontend=svelte -->
 node --version
 pnpm --version
+<!-- @init:end -->
 docker compose version
 ```
 
@@ -44,17 +46,21 @@ docker compose version
 | Tool | Required | Check |
 |---|---|---|
 | .NET SDK | 10.0+ (pinned in `global.json`) | `dotnet --version` |
+<!-- @init:if frontend=svelte -->
 | Node.js | 22+ | `node --version` |
 | pnpm | 10.x (managed via corepack) | `pnpm --version` |
+<!-- @init:end -->
 | Docker | Recent with Compose V2 | `docker compose version` |
 | Git | Any recent version | `git --version` |
 
+<!-- @init:if frontend=svelte -->
 If pnpm is not found, enable corepack first:
 
 ```bash
 corepack enable
 pnpm --version
 ```
+<!-- @init:end -->
 
 ---
 
@@ -248,7 +254,7 @@ Restart the API - the migration applies automatically on startup.
 
 ---
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ## Frontend Development
 
 ### `pnpm install` fails or produces a different lockfile
@@ -386,8 +392,12 @@ English is the base locale. The path pattern is `./src/messages/{locale}.json` a
 | Job | Triggered by changes in |
 |---|---|
 | Backend | `src/backend/**`, `global.json` |
+<!-- @init:if frontend=svelte -->
 | Frontend | `src/frontend/**` |
 | Docker | Dockerfiles, `.csproj`, `package.json`, `pnpm-lock.yaml` |
+<!-- @init:else -->
+| Docker | Dockerfiles, `.csproj` |
+<!-- @init:end -->
 
 If your changes don't match these paths, the corresponding jobs won't run.
 
@@ -409,7 +419,7 @@ If your changes don't match these paths, the corresponding jobs won't run.
 
 ## Production Deployment
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ### SvelteKit CSRF errors in production (`403 Cross-site POST form submissions are forbidden`)
 
 **Cause:** SvelteKit requires the `ORIGIN` environment variable when running behind a TLS-terminating reverse proxy. Without it, form submissions and non-GET requests are rejected.

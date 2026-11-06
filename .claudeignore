@@ -1,20 +1,33 @@
+# @init:if frontend=svelte
 # Dependencies
 src/frontend/node_modules/
 src/frontend/pnpm-lock.yaml
 
+# @init:end
 # Build outputs
 src/backend/**/bin/
 src/backend/**/obj/
+# @init:if frontend=blazor
+src/frontend/**/bin/
+src/frontend/**/obj/
+src/frontend/**/wwwroot/lib/
+# @init:end
+# @init:if frontend=svelte
 src/frontend/.svelte-kit/
 src/frontend/build/
+# @init:end
 
+# @init:if frontend=svelte
 # Generated files (never hand-edit)
 src/frontend/src/lib/api/v1.d.ts
 src/frontend/src/lib/paraglide/
+# @init:end
 
+# @init:if backend=yes
 # EF Core migrations (large, auto-generated)
 src/backend/NetRockTemplate.Infrastructure/Features/Postgres/Migrations/
 src/backend/NetRockTemplate.Infrastructure/Persistence/Migrations/
+# @init:end
 
 # Session docs (historical, not needed for coding tasks)
 docs/sessions/

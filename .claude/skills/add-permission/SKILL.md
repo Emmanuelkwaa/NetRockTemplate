@@ -21,6 +21,7 @@ Adds a permission constant across backend and frontend.
 3. *(Optional)* Seed the permission for existing roles in `SeedRolePermissionsAsync()` in `src/backend/NetRockTemplate.Infrastructure/Persistence/Extensions/ApplicationBuilderExtensions.cs`
 4. Verify: `dotnet build src/backend/NetRockTemplate.slnx`
 
+<!-- @init:if frontend=svelte -->
 **Frontend:**
 
 5. Add matching constants to `src/frontend/src/lib/utils/permissions.ts`:
@@ -37,3 +38,4 @@ Adds a permission constant across backend and frontend.
    ```
 8. If adding a sidebar nav item: add `permission: Permissions.Orders.View` to the nav item in `AppSidebar.svelte` - items are filtered per-permission, not as a group
 9. Verify: `cd src/frontend && pnpm run test && pnpm run format && pnpm run lint && pnpm run check`
+<!-- @init:end -->

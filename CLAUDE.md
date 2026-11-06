@@ -1,21 +1,30 @@
 # CLAUDE.md
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 NETrock - .NET 10 API (Clean Architecture) + SvelteKit frontend (Svelte 5), fully dockerized.
-<!-- @init:else -->
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+NETrock - .NET 10 API (Clean Architecture) + Blazor SSR frontend, fully dockerized.
+<!-- @init:end -->
+<!-- @init:if frontend=none -->
 NETrock - .NET 10 API (Clean Architecture), fully dockerized.
 <!-- @init:end -->
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 **The backend API is the core of the project.** It is a public-facing API designed to serve any client - multiple frontends, mobile apps, other backends, third-party integrations. The SvelteKit frontend is a fully functional reference client, not a throwaway. Treat every API change as if unknown consumers depend on it.
 <!-- @init:else -->
 **The backend API is the core of the project.** It is a public-facing API designed to serve any client - frontends, mobile apps, other backends, third-party integrations. Treat every API change as if unknown consumers depend on it.
 <!-- @init:end -->
 
 ```
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 Frontend (SvelteKit :5173) → /api/* proxy → Backend API (.NET :8080) → PostgreSQL / MinIO
-<!-- @init:else -->
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+Frontend (Blazor SSR) → named HttpClient "api" → Backend API (.NET :8080) → PostgreSQL / MinIO
+Other clients → Backend API
+<!-- @init:end -->
+<!-- @init:if frontend=none -->
 Clients → Backend API (.NET :8080) → PostgreSQL / MinIO
 <!-- @init:end -->
 Backend layers: WebApi → Application ← Infrastructure → Domain + Shared
@@ -35,7 +44,7 @@ Backend layers: WebApi → Application ← Infrastructure → Domain + Shared
 - `System.Text.Json` only - never `Newtonsoft.Json`
 - NuGet versions in `Directory.Packages.props` only - never in `.csproj`
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ### Frontend
 
 - Never hand-edit `v1.d.ts` - run `pnpm run api:generate`
@@ -49,6 +58,15 @@ Backend layers: WebApi → Application ← Infrastructure → Domain + Shared
 - Touch targets minimum 44px on all interactive elements
 - Unified UX - reuse existing components and patterns so the app feels like one product, not five
 - No overflow - dialogs, modals, and pages must never show scrollbars. Fit content to viewport.
+
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+### Frontend (Blazor)
+
+- `src/frontend/NetRockTemplate.UI` started from the stock `dotnet new blazor` template (static SSR, no auth). It has no sign-in UI yet - add it per project
+- Static SSR by default - add an interactive render mode only to the component that needs it, and say why in the PR
+- Call the API through `IHttpClientFactory.CreateClient("api")` - never hard-code the API URL
+- Keep `builder.AddServiceDefaults()` and `app.MapDefaultEndpoints()` in `Program.cs` - the container healthcheck uses `/health/live`
 
 <!-- @init:end -->
 ### Cross-Cutting
@@ -71,12 +89,12 @@ The backend API is public-facing. Treat every contract change with the same care
 | **Domain entity** | Renaming/removing a property, changing a type |
 | **Application interface/DTO** | Changing a method signature, renaming/removing a field, changing nullability |
 | **WebApi endpoint** | Changing route, method, request/response shape, status codes |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Frontend API types** | Always regenerated - broken by any backend DTO change |
 | **i18n keys** | Renaming a key (all usages break) |
 <!-- @init:end -->
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 **Pre-modification checklist:** (1) Check FILEMAP.md for impact, (2) Search all usages, (3) Regenerate frontend types if API changed, (4) Update i18n in both JSON files, (5) Document in commit body. Prefer additive changes. If breaking, update all consumers in the same PR.
 <!-- @init:else -->
 **Pre-modification checklist:** (1) Check FILEMAP.md for impact, (2) Search all usages, (3) Document in commit body. Prefer additive changes. If breaking, update all consumers in the same PR.
@@ -90,7 +108,7 @@ Run before every commit. Fix all errors before committing. **Loop until green - 
 # Backend (run when src/backend/ changed)
 dotnet build src/backend/NetRockTemplate.slnx && dotnet test src/backend/NetRockTemplate.slnx -c Release
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 # Frontend (run when src/frontend/ changed)
 cd src/frontend && pnpm run test && pnpm run format && pnpm run lint && pnpm run check
 
@@ -107,7 +125,7 @@ Do these automatically - never wait to be asked:
 |---|---|
 | **Any code change** | Run relevant verification (backend/frontend/both). Fix failures. Loop until green. |
 | **Modifying existing files** | Check FILEMAP.md for downstream impact before editing. Update all affected files in the same commit. |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Backend API change** (endpoint, DTO, response shape) | Regenerate frontend types (`pnpm run api:generate`), fix type errors. |
 <!-- @init:end -->
 | **Logically complete unit of work** | Commit immediately with Conventional Commit message. Don't batch, don't ask. |
@@ -123,12 +141,12 @@ Delegate to the right agent for the task. Run reviewers in parallel when reviewi
 | Agent | Role | When to use |
 |---|---|---|
 | `backend-engineer` | Implements .NET features | Task stays within `src/backend/` |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | `frontend-engineer` | Implements SvelteKit features | Task stays within `src/frontend/` |
 | `fullstack-engineer` | Implements cross-stack features | Task touches both backend and frontend |
 <!-- @init:end -->
 | `backend-reviewer` | Audits C# code (read-only) | Reviewing backend changes |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | `frontend-reviewer` | Audits Svelte code (read-only) | Reviewing frontend changes |
 | `ux-designer` | Audits UI/UX design quality (read-only) | Checking responsiveness, visual consistency, theming |
 <!-- @init:end -->
@@ -149,7 +167,7 @@ Delegate to the right agent for the task. Run reviewers in parallel when reviewi
 
 **Delegation patterns:**
 - **New backend feature**: `backend-engineer` implements, then `backend-reviewer` + `security-reviewer` audit in parallel
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - **New frontend feature**: `frontend-engineer` implements, then `frontend-reviewer` + `ux-designer` audit in parallel
 - **Full-stack feature**: `fullstack-engineer` implements end-to-end
 - **PR review** (`/review-pr`): `backend-reviewer` + `frontend-reviewer` + `security-reviewer` in parallel, add `ux-designer` for UI changes

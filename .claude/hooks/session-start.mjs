@@ -24,7 +24,7 @@ try {
   console.log('MISSING .NET SDK');
 }
 
-// @init:if frontend=yes
+// @init:if frontend=svelte
 // pnpm
 try {
   console.log(run('pnpm --version', { cwd: resolve(projectDir, 'src/frontend') }));
@@ -34,6 +34,7 @@ try {
 }
 // @init:end
 
+// @init:if backend=yes
 // dotnet-ef
 try {
   const tools = run('dotnet tool list -g');
@@ -45,6 +46,7 @@ try {
 } catch {
   console.log('MISSING dotnet-ef (run: dotnet tool restore)');
 }
+// @init:end
 
 // Docker
 try {

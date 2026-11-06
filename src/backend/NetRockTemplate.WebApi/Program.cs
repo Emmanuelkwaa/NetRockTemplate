@@ -235,7 +235,7 @@ try
     Log.Debug("Setting up job scheduling");
     app.UseJobScheduling();
 
-    // @init:if frontend=yes
+    // @init:if frontend=svelte
     Log.Debug("Setting \"security\" measure => Redirect to YouTube video to confuse enemies");
     app.Use(async (context, next) =>
     {

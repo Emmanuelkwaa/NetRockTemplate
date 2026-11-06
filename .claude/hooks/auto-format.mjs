@@ -30,6 +30,7 @@ try {
         { stdio: 'ignore' },
       );
     }
+// @init:if frontend=svelte
   } else if (['.ts', '.svelte', '.js', '.json', '.css', '.html'].includes(ext)) {
     const frontendDir = resolve(projectDir, 'src/frontend');
     const prettierBin = resolve(frontendDir, 'node_modules/.bin/prettier');
@@ -39,6 +40,7 @@ try {
         stdio: 'ignore',
       });
     }
+// @init:end
   }
 } catch {
   // Formatting is best-effort

@@ -25,7 +25,7 @@
 | **Authentication** | None - the API has no users, no sign-in and no `/api/auth/*` or `/api/users/*` endpoints. Every endpoint is anonymous |
 | **Rate Limiting** | Global fixed-window limiter partitioned by client IP, configurable per environment |
 <!-- @init:end -->
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Validation** | FluentValidation + Data Annotations, flowing constraints into OpenAPI spec and generated TypeScript types |
 <!-- @init:else -->
 | **Validation** | FluentValidation + Data Annotations, flowing constraints into the OpenAPI spec |
@@ -72,7 +72,7 @@
 | **Testing** | 4 test projects - unit, component (mocked services), API integration (WebApplicationFactory), architecture enforcement |
 <!-- @init:end -->
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ## Frontend - SvelteKit / Svelte 5
 
 | Feature | Implementation |
@@ -118,7 +118,7 @@
 
 | Feature | Implementation |
 |---|---|
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Aspire Local Dev** | One `dotnet run` for the full stack - API, frontend (hot-reload), PostgreSQL, MinIO (S3 storage), MailPit (email testing), OpenTelemetry Dashboard with traces, logs, and metrics |
 | **Production Docker** | Multi-stage Dockerfiles for API (.NET) and frontend (Node), dev config stripping, non-root users, health probe binary. Deploy to any platform - Docker Compose, Coolify, Railway, Kubernetes |
 <!-- @init:else -->
@@ -131,13 +131,13 @@
 | **Dependabot** | Weekly NuGet, npm, and GitHub Actions updates with grouped minor+patch PRs |
 | **Environment Config** | `appsettings.json` defines all options, `appsettings.Development.json` provides working dev defaults, env vars override for production |
 | **Production Hardening** | Dev config stripping from production images, reverse proxy trust configuration, CORS startup safeguard (crashes on `AllowAllOrigins=true` in production) |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Claude Code Skills** | 20+ native skills for development workflows - feature scaffolding, endpoint creation, PR management, design review, type generation. 12 specialized agents (engineers, reviewers, UX designer, product owner, tech writer), lifecycle hooks, and context files (`CLAUDE.md`, `FILEMAP.md`) for deep codebase understanding |
 <!-- @init:else -->
 | **Claude Code Skills** | Native skills for development workflows - feature scaffolding, endpoint creation, PR management. 8 specialized agents (engineers, reviewers, product owner, tech writer), lifecycle hooks, and context files (`CLAUDE.md`, `FILEMAP.md`) for deep codebase understanding |
 <!-- @init:end -->
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ## What Your Users Get
 
 NETrock is not just a developer tool - the included frontend delivers features that end users of your product interact with directly:

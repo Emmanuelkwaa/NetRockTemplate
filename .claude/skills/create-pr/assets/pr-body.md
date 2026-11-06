@@ -14,8 +14,14 @@ None / {describe if any, including migration steps}
 ## Test Plan
 - [ ] {Verification step 1}
 - [ ] {Verification step 2}
+<!-- @init:if backend=yes -->
 - [ ] Backend: `dotnet build && dotnet test -c Release`
+<!-- @init:else -->
+- [ ] Build: `dotnet build src/backend/NetRockTemplate.slnx`
+<!-- @init:end -->
+<!-- @init:if frontend=svelte -->
 - [ ] Frontend: `pnpm run test && pnpm run check`
+<!-- @init:end -->
 ```
 
 ## Guidelines

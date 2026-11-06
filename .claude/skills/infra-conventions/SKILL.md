@@ -13,7 +13,12 @@ Production: User's choice - Docker Compose, Coolify, Railway, Kubernetes, etc.
 ```
 
 - **Backend Dockerfile**: Multi-stage .NET build at `src/backend/NetRockTemplate.WebApi/Dockerfile`
+<!-- @init:if frontend=svelte -->
 - **Frontend Dockerfile**: Multi-stage Node/SvelteKit build at `src/frontend/Dockerfile`
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+- **Frontend Dockerfile**: Multi-stage .NET build of the Blazor app at `src/frontend/NetRockTemplate.UI/Dockerfile` (build context `./src`, curl for the `/health/live` healthcheck)
+<!-- @init:end -->
 - **Production config**: `appsettings.json` defines the full config structure; `docs/before-you-ship.md` lists what to configure
 
 ## Deployment Checklist
@@ -44,14 +49,18 @@ Production: User's choice - Docker Compose, Coolify, Railway, Kubernetes, etc.
 ### Health Checks
 - [ ] API: `/health/live` (liveness) and `/health/ready` (readiness)
 - [ ] Health probe binary used in Docker (not curl/wget which add attack surface)
+<!-- @init:if frontend=svelte -->
 - [ ] Frontend: HTTP check on port 3000
+<!-- @init:end -->
 - [ ] Start periods appropriate for cold starts (API: 60s, DB: 15s)
 
 ### Reproducibility
 - [ ] Can clone and run with `dotnet run --project src/backend/NetRockTemplate.AppHost` (local dev)
 - [ ] No machine-specific paths or assumptions
 - [ ] NuGet versions pinned in `Directory.Packages.props`
+<!-- @init:if frontend=svelte -->
 - [ ] pnpm lockfile committed
+<!-- @init:end -->
 
 ### Security (Infrastructure)
 - [ ] Production containers should use read-only root filesystem where possible

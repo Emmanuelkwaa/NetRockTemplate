@@ -24,7 +24,9 @@ Argument: PR number or URL.
 | Signal | How to check |
 |---|---|
 | Backend (.NET) | Diff touches `Directory.Packages.props` |
+<!-- @init:if frontend=svelte -->
 | Frontend (pnpm) | Diff touches `package.json` / `pnpm-lock.yaml` |
+<!-- @init:end -->
 | Dev-only dependency | Package appears only in test projects, build tooling, or `devDependencies` |
 | Production dependency | Package is imported/used in shipped code |
 
@@ -46,7 +48,9 @@ Argument: PR number or URL.
 
 - Search the codebase for direct imports/usages of the package:
   - .NET: `grep -r "using.*{PackageNamespace}" src/backend/` and check `.csproj` references
+<!-- @init:if frontend=svelte -->
   - Frontend: `grep -r "from ['\"].*{package}" src/frontend/src/`
+<!-- @init:end -->
 - Check if the package is a transitive dependency (only in lock file, not directly referenced)
 - For major bumps: check if any API surface we use was deprecated or removed
 
@@ -54,8 +58,14 @@ Argument: PR number or URL.
 
 - Checkout the PR branch: `gh pr checkout {number}`
 - Run the relevant test suite:
+<!-- @init:if backend=yes -->
   - Backend: `dotnet build src/backend/NetRockTemplate.slnx && dotnet test src/backend/NetRockTemplate.slnx -c Release`
+<!-- @init:else -->
+  - Build: `dotnet build src/backend/NetRockTemplate.slnx`
+<!-- @init:end -->
+<!-- @init:if frontend=svelte -->
   - Frontend: `cd src/frontend && pnpm install && pnpm run test && pnpm run check`
+<!-- @init:end -->
 - If tests pass, that's a strong signal. If they fail, identify whether the failure is related to the update.
 
 ## Output format
@@ -87,7 +97,11 @@ Argument: PR number or URL.
 
 ## Rules
 
+<!-- @init:if frontend=svelte -->
 - Research only - do NOT modify any files (except running `pnpm install` to update the lock file for testing)
+<!-- @init:else -->
+- Research only - do NOT modify any files
+<!-- @init:end -->
 - Always run the test suite - never skip it
 - When in doubt, verdict is NEEDS MANUAL REVIEW, not SAFE TO MERGE
 - A passing test suite does not override known breaking changes in the changelog

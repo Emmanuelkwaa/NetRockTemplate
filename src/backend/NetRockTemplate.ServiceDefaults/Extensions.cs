@@ -1,3 +1,7 @@
+// @init:if frontend=blazor uncomment
+// using Microsoft.AspNetCore.Builder;
+// using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+// @init:end
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using OpenTelemetry;
@@ -6,12 +10,18 @@ using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.Hosting;
 
+// @init:if backend=yes
 /// <summary>
-/// Aspire ServiceDefaults — wires up OpenTelemetry, service discovery, and HTTP client resilience.
-/// Health-check endpoint mapping is intentionally omitted because the application already
-/// provides <c>/health</c>, <c>/health/ready</c>, and <c>/health/live</c> via
+/// Aspire ServiceDefaults - wires up OpenTelemetry, service discovery, and HTTP client resilience.
+/// The API maps its own <c>/health</c>, <c>/health/ready</c>, and <c>/health/live</c> endpoints via
 /// <c>HealthCheckExtensions.MapHealthCheckEndpoints()</c>.
 /// </summary>
+// @init:else uncomment
+// /// <summary>
+// /// Aspire ServiceDefaults - wires up OpenTelemetry, service discovery, and HTTP client resilience.
+// /// The Blazor frontend maps <c>/health/live</c> with <c>MapDefaultEndpoints()</c>.
+// /// </summary>
+// @init:end
 public static class Extensions
 {
     /// <summary>
@@ -62,14 +72,16 @@ public static class Extensions
             .WithTracing(tracing =>
             {
                 tracing.AddAspNetCoreInstrumentation()
+// @init:if backend=yes
+                    .AddEntityFrameworkCoreInstrumentation()
+// @init:end
                     .AddHttpClientInstrumentation(options =>
                     {
                         // Filter out health check probe requests from traces
                         options.FilterHttpRequestMessage = httpRequestMessage =>
                             httpRequestMessage.RequestUri?.AbsolutePath.StartsWith("/health",
                                 StringComparison.OrdinalIgnoreCase) != true;
-                    })
-                    .AddEntityFrameworkCoreInstrumentation();
+                    });
             });
 
         AddOpenTelemetryExporters(builder);
@@ -92,13 +104,32 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Registers a basic liveness health check.
-    /// Application-specific health checks (PostgreSQL, S3) are registered separately
-    /// via <c>AddApplicationHealthChecks</c>.
+    /// Registers a basic liveness health check tagged <c>live</c>.
+    /// Application-specific health checks are registered by the application itself.
     /// </summary>
     private static void AddDefaultHealthChecks(this IHostApplicationBuilder builder)
     {
         builder.Services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
     }
+// @init:if frontend=blazor uncomment
+//
+//     extension(WebApplication app)
+//     {
+//         /// <summary>
+//         /// Maps <c>/health/live</c>, which runs only the liveness checks tagged <c>live</c> and returns
+//         /// the plain status. It is mapped in every environment, because container healthchecks need it.
+//         /// </summary>
+//         /// <returns>The application for chaining.</returns>
+//         public WebApplication MapDefaultEndpoints()
+//         {
+//             app.MapHealthChecks("/health/live", new HealthCheckOptions
+//             {
+//                 Predicate = registration => registration.Tags.Contains("live")
+//             });
+//
+//             return app;
+//         }
+//     }
+// @init:end
 }

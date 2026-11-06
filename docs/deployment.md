@@ -24,9 +24,13 @@ env "Parameters__jwt-secret=..." "Parameters__public-url=https://app.example.com
 
 | Parameter | Used for |
 |---|---|
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | `public-url` | Public URL of the app: CORS origin, email links and the frontend `ORIGIN` |
-<!-- @init:else -->
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+| `public-url` | Public URL of the Blazor app: CORS origin and email links |
+<!-- @init:end -->
+<!-- @init:if frontend=none -->
 | `public-url` | Public URL of the API: CORS origin and email links |
 <!-- @init:end -->
 <!-- @init:if database=managed -->
@@ -41,6 +45,9 @@ env "Parameters__jwt-secret=..." "Parameters__public-url=https://app.example.com
 <!-- @init:if auth=keycloak -->
 | `keycloak-client-secret` | Keycloak client secret |
 <!-- @init:end -->
+<!-- @init:if auth=keycloak frontend=blazor -->
+| `api-public-url` | Public URL of the API, the base of the Keycloak callback |
+<!-- @init:end -->
 | `storage-endpoint`, `storage-access-key`, `storage-secret-key`, `storage-bucket`, `storage-use-ssl` | External S3-compatible file storage |
 
 The generated stack contains the API and the Aspire dashboard, plus:
@@ -48,8 +55,11 @@ The generated stack contains the API and the Aspire dashboard, plus:
 <!-- @init:if database=managed -->
 - PostgreSQL, with `Database__MigrateOnStartup=true` on the API
 <!-- @init:end -->
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - The frontend, built from `src/frontend/Dockerfile` (port 3000)
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+- The Blazor app, built with the .NET SDK's container support. It reaches the API through service discovery (`services__api__http__0`)
 <!-- @init:end -->
 - No pgAdmin, MinIO or Mailpit: those run in development only
 
@@ -66,9 +76,13 @@ docker compose up -d --build
 docker compose ps        # wait until api is healthy
 ```
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 The frontend listens on `HTTP_PORT` (default 3000) and proxies `/api/*` to the API on the internal network. The API is not published on the host.
-<!-- @init:else -->
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+The Blazor app listens on `HTTP_PORT` (default 3000) and calls the API on the internal network (`services__api__http__0: http://api:8080`). The API is also published on `API_PORT` (default 8080), because browsers and other clients reach it directly; there is no proxy in front of it. The Blazor image is built from `src/frontend/NetRockTemplate.UI/Dockerfile` with `./src` as the build context.
+<!-- @init:end -->
+<!-- @init:if frontend=none -->
 The API listens on `HTTP_PORT` (default 8080).
 <!-- @init:end -->
 
@@ -115,5 +129,9 @@ Background jobs (Hangfire) store their state in the same database, in the `hangf
 
 ## Keycloak
 
+<!-- @init:if frontend=blazor -->
+Set `Authentication__Keycloak__Authority`, `ClientId` and `ClientSecret`, and register `{API public URL}/api/auth/keycloak/callback` as a valid redirect URI (`API_PUBLIC_URL` in own compose, `api-public-url` with Aspire). See [keycloak.md](keycloak.md).
+<!-- @init:else -->
 Set `Authentication__Keycloak__Authority`, `ClientId` and `ClientSecret`, and register `{public URL}/api/auth/keycloak/callback` as a valid redirect URI. See [keycloak.md](keycloak.md).
+<!-- @init:end -->
 <!-- @init:end -->

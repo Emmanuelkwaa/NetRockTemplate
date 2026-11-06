@@ -11,15 +11,22 @@
         <!-- @init:if database=managed -->
         <PackageReference Include="Aspire.Hosting.PostgreSQL" />
         <!-- @init:end -->
-        <!-- @init:if frontend=yes -->
+        <!-- @init:if frontend=svelte -->
         <PackageReference Include="Aspire.Hosting.JavaScript" />
         <!-- @init:end -->
+        <!-- @init:if backend=yes -->
         <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" />
         <PackageReference Include="CommunityToolkit.Aspire.Hosting.Minio" />
+        <!-- @init:end -->
     </ItemGroup>
 
     <ItemGroup>
+        <!-- @init:if backend=yes -->
         <ProjectReference Include="../NetRockTemplate.WebApi/NetRockTemplate.WebApi.csproj" />
+        <!-- @init:end -->
+        <!-- @init:if frontend=blazor uncomment -->
+        <!-- <ProjectReference Include="../../frontend/NetRockTemplate.UI/NetRockTemplate.UI.csproj" /> -->
+        <!-- @init:end -->
     </ItemGroup>
 
 </Project>

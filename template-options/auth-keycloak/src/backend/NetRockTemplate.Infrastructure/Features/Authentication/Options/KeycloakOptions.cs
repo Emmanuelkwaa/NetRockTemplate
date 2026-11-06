@@ -39,6 +39,13 @@ public sealed class KeycloakOptions : IValidatableObject
     public string? Audience { get; init; }
 
     /// <summary>
+    /// Gets the public base URL that Keycloak redirects back to (<c>{CallbackBaseUrl}/api/auth/keycloak/callback</c>).
+    /// Defaults to <c>Email:FrontendBaseUrl</c>, which is right when the frontend proxies <c>/api</c>.
+    /// Set it to the API's own URL when browsers reach the API directly, for example next to a Blazor frontend.
+    /// </summary>
+    public string? CallbackBaseUrl { get; init; }
+
+    /// <summary>
     /// Gets the scopes requested in the authorization code flow.
     /// </summary>
     public string Scope { get; init; } = "openid profile email";
@@ -64,6 +71,12 @@ public sealed class KeycloakOptions : IValidatableObject
         if (!Uri.TryCreate(Authority, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http"))
         {
             yield return new ValidationResult("Authority must be an absolute http(s) URL of the Keycloak realm.", [nameof(Authority)]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(CallbackBaseUrl)
+            && (!Uri.TryCreate(CallbackBaseUrl, UriKind.Absolute, out var callback) || callback.Scheme is not ("https" or "http")))
+        {
+            yield return new ValidationResult("CallbackBaseUrl must be an absolute http(s) URL when set.", [nameof(CallbackBaseUrl)]);
         }
 
         if (LoginStateLifetime <= TimeSpan.Zero)

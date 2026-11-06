@@ -26,7 +26,16 @@ In the Keycloak admin console, in your realm:
 3. **Login settings**:
    - **Valid redirect URIs**: `{base URL}/api/auth/keycloak/callback`
    - **Web origins**: `{base URL}`
-   - The base URL is the frontend's URL, for example `http://localhost:13000` in development and `https://app.example.com` in production. API-only projects use the API's URL (`http://localhost:13002` in development). It is the value of `Email:FrontendBaseUrl`.
+<!-- @init:if frontend=svelte -->
+   - The base URL is the frontend's URL, for example `http://localhost:13000` in development and `https://app.example.com` in production. The SvelteKit frontend proxies `/api/*` to the API. It is the value of `Email:FrontendBaseUrl`.
+<!-- @init:end -->
+<!-- @init:if frontend=blazor -->
+   - The base URL is the API's own URL: `http://localhost:13002` in development and `API_PUBLIC_URL` (or the `api-public-url` parameter) in production. The Blazor frontend has no proxy in front of the API, so the sign-in flow runs on the API, the same as in an API-only project. It is the value of `Authentication:Keycloak:CallbackBaseUrl`.
+   - **Web origins** is the Blazor app's URL (`http://localhost:13000` in development).
+<!-- @init:end -->
+<!-- @init:if frontend=none -->
+   - The base URL is the API's URL, for example `http://localhost:13002` in development. It is the value of `Email:FrontendBaseUrl`.
+<!-- @init:end -->
 4. **Advanced > Proof Key for Code Exchange Code Challenge Method**: `S256`.
 5. **Credentials**: copy the client secret.
 6. **Audience mapper**. Keycloak puts `account` in the access token's `aud` claim by default, and the API rejects tokens whose audience is not its client ID. Open **Client scopes > my-app-dedicated > Add mapper > By configuration > Audience**, set **Included Client Audience** to your client ID, and turn **Add to access token** on.
@@ -41,6 +50,7 @@ The API also requires `sub` to be a UUID, which is true for normal Keycloak user
 | `Authentication:Keycloak:ClientId` | `appsettings.json` |
 | `Authentication:Keycloak:ClientSecret` | Never in a file. Development: AppHost user secrets. Production: environment variable `Authentication__Keycloak__ClientSecret`. |
 | `Authentication:Keycloak:Audience` | Optional. Defaults to the client ID. |
+| `Authentication:Keycloak:CallbackBaseUrl` | Optional. The public base URL Keycloak redirects back to. Defaults to `Email:FrontendBaseUrl`. Set it when browsers reach the API directly instead of through a frontend proxy. |
 
 Store the development secret:
 
@@ -55,6 +65,6 @@ The AppHost passes it to the API as `Authentication__Keycloak__ClientSecret`. HT
 | Symptom | Cause |
 |---|---|
 | 401 on every request with a valid login | Missing audience mapper, or `Authority` differs from the token's `iss` (trailing slash, hostname, or `http` vs `https`). |
-| Keycloak shows "Invalid parameter: redirect_uri" | The callback URL is not in **Valid redirect URIs**, or `Email:FrontendBaseUrl` is wrong. |
+| Keycloak shows "Invalid parameter: redirect_uri" | The callback URL is not in **Valid redirect URIs**, or `Email:FrontendBaseUrl` (or `CallbackBaseUrl`) is wrong. |
 | Callback returns 400 "sign-in request expired" | The login took longer than `LoginStateLifetime` (10 minutes), or the browser blocked the login-state cookie. |
 | API fails at startup with an options validation error | `Authority`, `ClientId` or `ClientSecret` is empty. |

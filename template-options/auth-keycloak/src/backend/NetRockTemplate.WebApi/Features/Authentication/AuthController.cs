@@ -211,7 +211,14 @@ public class AuthController(
         return NoContent();
     }
 
-    private string RedirectUri => emailOptions.Value.FrontendBaseUrl.TrimEnd('/') + CallbackPath;
+    private string RedirectUri
+    {
+        get
+        {
+            var baseUrl = keycloakOptions.Value.CallbackBaseUrl;
+            return (string.IsNullOrWhiteSpace(baseUrl) ? emailOptions.Value.FrontendBaseUrl : baseUrl).TrimEnd('/') + CallbackPath;
+        }
+    }
 
     private LoginState? ReadLoginState()
     {

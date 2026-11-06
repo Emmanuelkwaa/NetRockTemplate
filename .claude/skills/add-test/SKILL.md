@@ -101,6 +101,7 @@ For FluentValidation rules without starting the test server.
    ```
 3. Verify: `dotnet test src/backend/tests/NetRockTemplate.Api.Tests -c Release`
 
+<!-- @init:if frontend=svelte -->
 ## Frontend Unit Test
 
 For utility functions, state modules, and pure logic in `$lib/`.
@@ -123,3 +124,4 @@ For Svelte components with DOM interactions.
    vi.mock('$lib/paraglide/messages', () => new Proxy({}, { get: (_, key) => () => String(key) }));
    ```
 4. Verify: `cd src/frontend && pnpm run test`
+<!-- @init:end -->

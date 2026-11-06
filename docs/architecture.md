@@ -3,7 +3,7 @@
 > Back to [README](../README.md)
 
 ```
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 Frontend (SvelteKit :5173)
     |
     |  /api/* proxy (catch-all server route)
@@ -79,7 +79,7 @@ dotnet test src/backend/NetRockTemplate.slnx -c Release
 
 ```
 src/
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 |-- backend/                          # .NET 10 API (Clean Architecture)
 <!-- @init:else -->
 +-- backend/                          # .NET 10 API (Clean Architecture)
@@ -114,7 +114,7 @@ src/
 |       |-- YourProject.Api.Tests/         # HTTP integration tests
 <!-- @init:end -->
 |       +-- YourProject.Architecture.Tests/ # Dependency direction + naming enforcement
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 |
 +-- frontend/                         # SvelteKit frontend
     +-- src/
