@@ -82,7 +82,9 @@ api.WithEnvironment("Authentication__Jwt__Key", jwtSecret);
 // @init:end
 // @init:if frontend=blazor uncomment
 // // ── Frontend (Blazor SSR) ───────────────────────────────────────────────────
-// var frontend = builder.AddProject<Projects.NetRockTemplate_UI>("frontend")
+// // The "http" launch profile keeps the stock HTTPS redirection from sending browsers to the
+// // template's random https port in development.
+// var frontend = builder.AddProject<Projects.NetRockTemplate_UI>("frontend", launchProfileName: "http")
 //     .WithEndpoint("http", e =>
 //     {
 //         e.Port = frontendPort;
