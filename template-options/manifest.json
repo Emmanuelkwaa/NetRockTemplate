@@ -1263,7 +1263,7 @@
       ]
     },
     {
-      "when": "frontend=none",
+      "when": "frontend=blazor,none",
       "delete": [
         "src/frontend",
         ".claude/agents/frontend-engineer.md",
@@ -1274,12 +1274,73 @@
         ".claude/skills/new-page",
         ".claude/skills/gen-types",
         ".claude/skills/review-design"
-      ],
+      ]
+    },
+    {
+      "when": "frontend=none",
       "json": [
         {
           "file": "src/backend/NetRockTemplate.WebApi/appsettings.Development.json",
           "set": {
             "Email:FrontendBaseUrl": "http://localhost:13002"
+          }
+        }
+      ]
+    },
+    {
+      "when": "backend=no",
+      "delete": [
+        "src/backend/NetRockTemplate.Application",
+        "src/backend/NetRockTemplate.Domain",
+        "src/backend/NetRockTemplate.Infrastructure",
+        "src/backend/NetRockTemplate.Shared",
+        "src/backend/NetRockTemplate.WebApi",
+        "src/backend/HealthProbe",
+        "src/backend/tests",
+        "src/backend/.dockerignore",
+        ".config/dotnet-tools.json",
+        "docs/architecture.md",
+        "docs/before-you-ship.md",
+        "docs/features.md",
+        "docs/security.md",
+        "docs/troubleshooting.md",
+        ".claude/agents/backend-engineer.md",
+        ".claude/agents/backend-reviewer.md",
+        ".claude/agents/devops-reviewer.md",
+        ".claude/agents/security-reviewer.md",
+        ".claude/agents/test-writer.md",
+        ".claude/skills/add-aspire-dep",
+        ".claude/skills/add-background-job",
+        ".claude/skills/add-ci-area",
+        ".claude/skills/add-email-template",
+        ".claude/skills/add-env-var",
+        ".claude/skills/add-options-class",
+        ".claude/skills/add-permission",
+        ".claude/skills/add-rate-limit",
+        ".claude/skills/add-route-constraint",
+        ".claude/skills/add-test",
+        ".claude/skills/backend-conventions",
+        ".claude/skills/infra-conventions",
+        ".claude/skills/manage-file-storage",
+        ".claude/skills/new-endpoint",
+        ".claude/skills/new-entity",
+        ".claude/skills/new-feature",
+        ".claude/skills/review-pr",
+        ".claude/skills/security-conventions"
+      ],
+      "overlay": "stack-blazor-only"
+    },
+    {
+      "when": "frontend=blazor",
+      "overlay": "stack-blazor"
+    },
+    {
+      "when": "backend=yes auth=keycloak frontend=blazor",
+      "json": [
+        {
+          "file": "src/backend/NetRockTemplate.WebApi/appsettings.Development.json",
+          "set": {
+            "Authentication:Keycloak:CallbackBaseUrl": "http://localhost:13002"
           }
         }
       ]

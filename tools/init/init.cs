@@ -388,6 +388,13 @@ static class Generator
             }
         }
 
+        if (s.Frontend == "blazor")
+        {
+            Ui.Step("Creating the Blazor project (dotnet new blazor)");
+            BlazorProject.Create(s, output);
+            textFiles = TextFiles(output).ToList();
+        }
+
         Ui.Step("Renaming project");
         Rename(output, s, textFiles);
 
@@ -619,6 +626,65 @@ static class Generator
     }
 }
 
+/// <summary>
+/// Creates the Blazor SSR project from the stock <c>dotnet new blazor</c> template, so it matches the
+/// installed SDK, then wires it to Aspire. Generated pages are left as they are.
+/// </summary>
+static class BlazorProject
+{
+    // Renamed with the rest of the project afterwards.
+    private const string ProjectName = "NetRockTemplate.UI";
+
+    private const string ApiClient = """
+
+
+        // Named client for the backend API. Aspire service discovery resolves "http://api"
+        // (services__api__http__0 in own compose). Use IHttpClientFactory.CreateClient("api").
+        builder.Services.AddHttpClient("api", client => client.BaseAddress = new Uri("http://api"));
+        """;
+
+    public static void Create(Settings s, string output)
+    {
+        var relative = Path.Combine("src", "frontend", ProjectName);
+        Shell.Run("dotnet", ["new", "blazor", "--name", ProjectName, "--output", relative,
+            "--interactivity", "None", "--auth", "None", "--no-restore"], output);
+
+        var directory = Path.Combine(output, relative);
+        Edit(Path.Combine(directory, "Program.cs"), code =>
+        {
+            code = Insert(code, "var builder = WebApplication.CreateBuilder(args);", after: true,
+                "\n\nbuilder.AddServiceDefaults();" + (s.HasBackend ? ApiClient : ""));
+            return Insert(code, "app.Run();", after: false, "app.MapDefaultEndpoints();\n\n");
+        });
+
+        Edit(Path.Combine(directory, $"{ProjectName}.csproj"), project => Insert(project, "</Project>", after: false, """
+              <ItemGroup>
+                <ProjectReference Include="../../backend/NetRockTemplate.ServiceDefaults/NetRockTemplate.ServiceDefaults.csproj" />
+              </ItemGroup>
+
+
+            """));
+        Ui.Sub($"{ProjectName} created and connected to ServiceDefaults");
+    }
+
+    private static void Edit(string path, Func<string, string> change)
+    {
+        if (!File.Exists(path)) throw new InitException($"dotnet new blazor did not create {Path.GetFileName(path)}");
+        var content = File.ReadAllText(path);
+        var newline = content.Contains("\r\n") ? "\r\n" : "\n";
+        File.WriteAllText(path, change(content.Replace("\r\n", "\n")).Replace("\n", newline));
+    }
+
+    // Fails loudly when the stock template changes shape, instead of producing a half-wired project.
+    private static string Insert(string content, string anchor, bool after, string text)
+    {
+        var index = content.IndexOf(anchor, StringComparison.Ordinal);
+        if (index < 0) throw new InitException($"The Blazor template no longer contains '{anchor}'. Update tools/init/init.cs.");
+        var at = after ? index + anchor.Length : index;
+        return content.Insert(at, text.Replace("\r\n", "\n"));
+    }
+}
+
 static class Migrations
 {
     public static void Regenerate(Settings s, string output)
@@ -680,7 +746,7 @@ static class NextSteps
             Ui.Warn("Keycloak: create a confidential OpenID Connect client in your realm with:");
             Ui.Sub("Client authentication on, Standard flow on, PKCE method S256");
             Ui.Sub($"Valid redirect URI:  {baseUrl}/api/auth/keycloak/callback");
-            Ui.Sub($"Web origin:          {baseUrl}");
+            Ui.Sub($"Web origin:          {(s.Frontend == "none" ? baseUrl : $"http://localhost:{s.Port}")}");
             Ui.Sub("An audience mapper that adds the client ID to the access token 'aud' claim");
             if (string.IsNullOrEmpty(s.KeycloakAuthority) || string.IsNullOrEmpty(s.KeycloakClientId))
             {

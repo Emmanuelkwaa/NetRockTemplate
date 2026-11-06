@@ -1,6 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var frontendPort = int.TryParse(builder.Configuration["Ports:Frontend"], out var fp) ? fp : 13000;
+// @init:if backend=yes
 var apiPort = int.TryParse(builder.Configuration["Ports:Api"], out var ap) ? ap : 13002;
 
 // Derive infrastructure ports from the base (frontend) port so the entire
@@ -13,6 +14,7 @@ var minioPort = frontendPort + 5;
 var minioConsolePort = frontendPort + 6;
 var mailpitSmtpPort = frontendPort + 7;
 var mailpitHttpPort = frontendPort + 8;
+// @init:end
 
 // @init:if deploy=aspire uncomment
 // // `aspire publish` writes docker-compose.yaml and .env for this environment.
@@ -20,6 +22,7 @@ var mailpitHttpPort = frontendPort + 8;
 // builder.AddDockerComposeEnvironment("compose");
 //
 // @init:end
+// @init:if backend=yes
 // ── Infrastructure ──────────────────────────────────────────────────────────
 // Container resources use session lifetime (default) - containers stop on
 // Ctrl+C and restart on next run. Named data volumes persist across restarts,
@@ -76,6 +79,21 @@ api.WithEnvironment("Authentication__Jwt__Key", jwtSecret);
 // api.WithEnvironment("Authentication__Keycloak__ClientSecret", keycloakClientSecret);
 // @init:end
 
+// @init:end
+// @init:if frontend=blazor uncomment
+// // ── Frontend (Blazor SSR) ───────────────────────────────────────────────────
+// var frontend = builder.AddProject<Projects.NetRockTemplate_UI>("frontend")
+//     .WithEndpoint("http", e =>
+//     {
+//         e.Port = frontendPort;
+//         e.IsProxied = false;
+//     });
+// @init:if backend=yes
+// frontend.WithReference(api).WaitFor(api);
+// @init:end
+//
+// @init:end
+// @init:if backend=yes
 // Local development services - production uses real SMTP and S3-compatible storage
 // (configured via environment variables).
 if (builder.ExecutionContext.IsRunMode)
@@ -124,9 +142,15 @@ if (builder.ExecutionContext.IsRunMode)
 //         .WaitFor(api);
 // @init:end
 }
+// @init:end
 // @init:if deploy=aspire uncomment
+// @init:if backend=yes
 // else
+// @init:else
+// if (builder.ExecutionContext.IsPublishMode)
+// @init:end
 // {
+// @init:if backend=yes
 //     // Production values come from the .env file next to the published docker-compose.yaml.
 //     var publicUrl = builder.AddParameter("public-url");
 //
@@ -138,8 +162,14 @@ if (builder.ExecutionContext.IsRunMode)
 //         .WithEnvironment("FileStorage__UseSSL", builder.AddParameter("storage-use-ssl"))
 //         .WithEnvironment("Email__FrontendBaseUrl", publicUrl)
 //         .WithEnvironment("Cors__AllowedOrigins__0", publicUrl);
+// @init:end
 // @init:if database=managed
 //     api.WithEnvironment("Database__MigrateOnStartup", "true");
+// @init:end
+// @init:if auth=keycloak frontend=blazor
+//
+//     // Keycloak redirects back to the API, which is public next to the Blazor frontend.
+//     api.WithEnvironment("Authentication__Keycloak__CallbackBaseUrl", builder.AddParameter("api-public-url"));
 // @init:end
 // @init:if frontend=svelte
 //
@@ -150,6 +180,12 @@ if (builder.ExecutionContext.IsRunMode)
 //         .WithEnvironment("API_URL", api.GetEndpoint("http"))
 //         .WithEnvironment("ORIGIN", publicUrl)
 //         .WaitFor(api);
+// @init:end
+// @init:if frontend=blazor
+// @init:if backend=yes
+//
+// @init:end
+//     frontend.WithExternalHttpEndpoints();
 // @init:end
 // }
 // @init:end
