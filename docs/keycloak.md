@@ -1,6 +1,21 @@
 # Keycloak
 
-This project uses an existing Keycloak server as its identity provider. The project only connects to it: there is no Keycloak container and no realm import. Users, passwords, MFA and social login are managed in Keycloak.
+Keycloak is this project's identity provider. Users, passwords, MFA and social login are managed in Keycloak; the project only signs users in and validates their tokens.
+
+Init chose where Keycloak runs, separately for development and production:
+
+| | Where Keycloak runs |
+|---|---|
+<!-- @init:if keycloak-dev=managed -->
+| **Development** | Managed: Aspire runs Keycloak 26.4.7 with the realm in `keycloak/dev/realm.json`, including a test user. See [Managed Keycloak in development](#managed-keycloak-in-development). |
+<!-- @init:else -->
+| **Development** | External: an existing Keycloak server. Create the client as described in [Create the client](#create-the-client). |
+<!-- @init:end -->
+<!-- @init:if keycloak-prod=managed -->
+| **Production** | Managed: the production stack runs Keycloak 26.4.7 in production mode with the realm in `keycloak/prod/realm.json` (no users). See [docs/deployment.md](deployment.md). |
+<!-- @init:else -->
+| **Production** | External: an existing Keycloak server. The realm URL, client ID and client secret are required at deployment; deployment stops with an error until they are set. |
+<!-- @init:end -->
 
 ## How it works
 
@@ -17,8 +32,26 @@ This project uses an existing Keycloak server as its identity provider. The proj
 
 - Mobile apps and other backends can skip these endpoints and send Keycloak access tokens directly.
 
+<!-- @init:if keycloak-dev=managed -->
+## Managed Keycloak in development
+
+`dotnet run --project src/backend/NetRockTemplate.AppHost` starts Keycloak on port 13009 (base port + 9) next to the API. The API waits for it.
+
+- **Realm and client**: realm and client are both named `net-rock-template`. The client is confidential, uses the standard flow with PKCE S256, has the redirect URI and web origin for this project, and has the audience mapper the API needs.
+- **Test user**: signs in with the email and password you gave init. Its password is in AppHost user secrets (`Parameters:keycloak-test-user-password`). It exists only in the development realm.
+- **Admin console**: `http://localhost:13009/admin`, user `admin`, password in `Parameters:keycloak-admin-password`.
+- **Secrets**: `keycloak/dev/realm.json` contains `${KC_CLIENT_SECRET}`, `${KC_TEST_USER_EMAIL}` and `${KC_TEST_USER_PASSWORD}` placeholders. The AppHost passes the values from user secrets as environment variables, and Keycloak fills them in when it imports the realm. No secret is stored in a tracked file.
+- **Data**: the realm is imported once into the `net-rock-template-keycloak-data` volume. To apply changes to `realm.json`, stop the AppHost and remove that volume.
+
+`Authentication:Keycloak:Authority` and `ClientId` for this realm are in `appsettings.Development.json`.
+
+<!-- @init:end -->
 ## Create the client
 
+<!-- @init:if keycloak-dev=managed keycloak-prod=managed -->
+Both environments create this client from the generated realm files. Use these steps only if you move to an existing Keycloak server.
+
+<!-- @init:end -->
 In the Keycloak admin console, in your realm:
 
 1. **Clients > Create client**, type OpenID Connect. Pick a client ID, for example `my-app`.
@@ -50,6 +83,11 @@ The API also requires `sub` to be a UUID, which is true for normal Keycloak user
 | `Authentication:Keycloak:ClientId` | `appsettings.json` |
 | `Authentication:Keycloak:ClientSecret` | Never in a file. Development: AppHost user secrets. Production: environment variable `Authentication__Keycloak__ClientSecret`. |
 | `Authentication:Keycloak:Audience` | Optional. Defaults to the client ID. |
+<!-- @init:if keycloak-prod=managed -->
+| `Authentication:Keycloak:InternalUrl` | Optional. A realm URL the API uses on an internal network (discovery, signing keys, token and logout calls) when the public `Authority` is not reachable from the API container. Tokens are still validated against `Authority`. Plain HTTP is allowed for this address only. Keycloak must run with `KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true`. The managed production stack sets it to `http://keycloak:8080/realms/net-rock-template`. |
+<!-- @init:else -->
+| `Authentication:Keycloak:InternalUrl` | Optional. A realm URL the API uses on an internal network (discovery, signing keys, token and logout calls) when the public `Authority` is not reachable from the API container. Tokens are still validated against `Authority`. Plain HTTP is allowed for this address only. Keycloak must run with `KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true`. |
+<!-- @init:end -->
 | `Authentication:Keycloak:CallbackBaseUrl` | Optional. The public base URL Keycloak redirects back to. Defaults to `Email:FrontendBaseUrl`. Set it when browsers reach the API directly instead of through a frontend proxy. |
 
 Store the development secret:

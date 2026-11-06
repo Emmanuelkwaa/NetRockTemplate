@@ -13,7 +13,9 @@ aspire publish --project src/backend/NetRockTemplate.AppHost/NetRockTemplate.App
 aspire deploy --project src/backend/NetRockTemplate.AppHost/NetRockTemplate.AppHost.csproj -o aspire-output
 ```
 
-`aspire-output/` is git-ignored because its `.env` holds secrets. `aspire deploy` needs a value for every parameter. Pass them as environment variables (names contain dashes, so use `env`) or answer the prompts:
+`aspire-output/` is git-ignored because its `.env` holds secrets. `aspire deploy` needs a value for every parameter. Pass them as environment variables (names contain dashes, so use `env`) or answer the prompts. A non-interactive run stops before starting any container and names the first missing parameter.
+
+`aspire deploy` remembers the values in `~/.aspire/deployments/<hash>/production.json` on the deploying machine, in plain text, and reuses them next time. Protect that machine accordingly, and delete that folder to start over.
 
 ```bash
 env "Parameters__jwt-secret=..." "Parameters__public-url=https://app.example.com" \
@@ -44,6 +46,17 @@ env "Parameters__jwt-secret=..." "Parameters__public-url=https://app.example.com
 <!-- @init:end -->
 <!-- @init:if auth=keycloak -->
 | `keycloak-client-secret` | Keycloak client secret |
+<!-- @init:end -->
+<!-- @init:if keycloak-prod=external -->
+| `keycloak-authority`, `keycloak-client-id` | Production realm URL and client ID of the existing Keycloak server. No default: `aspire deploy` stops until they are set |
+<!-- @init:end -->
+<!-- @init:if keycloak-prod=managed -->
+| `keycloak-public-url` | Public https URL of the stack's Keycloak (`KC_HOSTNAME`, and the base of the token issuer) |
+| `keycloak-admin-username`, `keycloak-admin-password` | Bootstrap admin of the master realm |
+| `keycloak-db-password` | Password of Keycloak's database login |
+<!-- @init:if database=external -->
+| `keycloak-db-url`, `keycloak-db-username` | JDBC URL and login of Keycloak's own database, separate from the app's |
+<!-- @init:end -->
 <!-- @init:end -->
 <!-- @init:if auth=keycloak frontend=blazor -->
 | `api-public-url` | Public URL of the API, the base of the Keycloak callback |
@@ -125,7 +138,31 @@ Background jobs (Hangfire) store their state in the same database, in the `hangf
 - `GET /health/live` - the process is up (used by the container healthcheck)
 - `GET /health/ready` - dependencies are reachable
 - `GET /health` - full report
-<!-- @init:if auth=keycloak -->
+<!-- @init:if keycloak-prod=managed -->
+
+## Keycloak (managed)
+
+The stack runs Keycloak 26.4.7 in production mode (`start --import-realm`). It assumes a TLS-terminating reverse proxy in front: Keycloak listens on plain HTTP inside (`KC_HTTP_ENABLED`), trusts `X-Forwarded-*` headers (`KC_PROXY_HEADERS=xforwarded`) and advertises the public URL (`KC_HOSTNAME`). Do not expose its HTTP port directly to the internet.
+
+- **Public URL**: point a hostname such as `https://auth.example.com` at Keycloak's port and set it as `KEYCLOAK_PUBLIC_URL` (own compose) or `keycloak-public-url` (Aspire). Tokens carry it as the issuer, and the API's `Authority` is `{public URL}/realms/net-rock-template`.
+- **Internal calls**: the API reaches Keycloak at `http://keycloak:8080` (`Authentication__Keycloak__InternalUrl`). `KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true` makes Keycloak answer those calls with internal endpoints.
+- **Realm**: `keycloak/prod/realm.json` defines the realm and client with no users. The client secret (`KC_CLIENT_SECRET`), redirect URI base and web origin come from the environment. It is imported on the first start only; an existing realm is never overwritten, so changes made in the admin console survive redeploys. Create users in the admin console or connect an identity provider there.
+- **Admin**: the bootstrap admin (`KEYCLOAK_ADMIN_USERNAME` / `KEYCLOAK_ADMIN_PASSWORD`) is for the master realm. Replace it with a permanent admin after the first sign-in.
+- **Health**: health endpoints are on the management port (9000). Own compose waits for `/health/ready` before starting the API.
+<!-- @init:if database=managed -->
+- **Database**: Keycloak uses its own `keycloak` database and login on the stack's PostgreSQL server. `keycloak/postgres-init/01-keycloak.sh` creates them, but PostgreSQL runs init scripts only when its data volume is empty. If the volume already exists, run the script once by hand (the postgres service already has `KEYCLOAK_DB_PASSWORD`):
+
+  ```bash
+  docker compose exec postgres bash /docker-entrypoint-initdb.d/01-keycloak.sh
+  ```
+<!-- @init:else -->
+- **Database**: set `KC_DB_URL`, `KC_DB_USERNAME` and `KEYCLOAK_DB_PASSWORD` (Aspire: `keycloak-db-url`, `keycloak-db-username`, `keycloak-db-password`) to a database and login reserved for Keycloak, separate from the app's.
+<!-- @init:end -->
+<!-- @init:if deploy=aspire -->
+- **Aspire**: the realm and PostgreSQL init folders are bind mounts. The generated `.env` gets their absolute paths (`KEYCLOAK_BINDMOUNT_0`, `DB_BINDMOUNT_0`), so run `aspire deploy` from a checkout on the target host, or fix those paths before `docker compose up`.
+<!-- @init:end -->
+<!-- @init:end -->
+<!-- @init:if keycloak-prod=external -->
 
 ## Keycloak
 
@@ -134,4 +171,6 @@ Set `Authentication__Keycloak__Authority`, `ClientId` and `ClientSecret`, and re
 <!-- @init:else -->
 Set `Authentication__Keycloak__Authority`, `ClientId` and `ClientSecret`, and register `{public URL}/api/auth/keycloak/callback` as a valid redirect URI. See [keycloak.md](keycloak.md).
 <!-- @init:end -->
+
+These are required. `docker compose up` (and `config`) stops with a message naming the missing variable, `aspire deploy` stops before starting containers, and the API itself exits at startup if any of them is empty.
 <!-- @init:end -->
