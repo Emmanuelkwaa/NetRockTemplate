@@ -30,7 +30,7 @@ public class KeycloakAuthServiceTests
         }
     };
 
-    private KeycloakAuthService CreateService()
+    private KeycloakAuthService CreateService(string? internalUrl = null)
     {
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
         httpClientFactory.CreateClient(KeycloakAuthService.HttpClientName).Returns(_ => new HttpClient(_handler, disposeHandler: false));
@@ -42,7 +42,8 @@ public class KeycloakAuthServiceTests
         {
             Authority = Realm,
             ClientId = "my-client",
-            ClientSecret = "my-secret"
+            ClientSecret = "my-secret",
+            InternalUrl = internalUrl
         });
 
         return new KeycloakAuthService(httpClientFactory, options, bearerMonitor, NullLogger<KeycloakAuthService>.Instance);
@@ -174,6 +175,35 @@ public class KeycloakAuthServiceTests
         Assert.Equal($"{Realm}/protocol/openid-connect/logout", _handler.LastUri?.ToString());
         Assert.Equal("rt1", _handler.LastForm["refresh_token"]);
         Assert.Equal("my-secret", _handler.LastForm["client_secret"]);
+    }
+
+    [Fact]
+    public async Task Revoke_WithInternalUrl_PostsToInternalLogoutEndpoint()
+    {
+        _handler.Respond(HttpStatusCode.NoContent, "");
+
+        await CreateService("http://keycloak:8080/realms/test").RevokeAsync("rt1", CancellationToken.None);
+
+        Assert.Equal("http://keycloak:8080/realms/test/protocol/openid-connect/logout", _handler.LastUri?.ToString());
+    }
+
+    [Fact]
+    public async Task Refresh_WithInternalUrl_PostsToInternalTokenEndpoint()
+    {
+        _handler.Respond(HttpStatusCode.OK, """{"access_token":"a","refresh_token":"r","expires_in":300,"refresh_expires_in":1800}""");
+
+        var result = await CreateService("http://keycloak:8080/realms/test").RefreshAsync("rt1", CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("http://keycloak:8080/realms/test/protocol/openid-connect/token", _handler.LastUri?.ToString());
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationRequest_WithInternalUrl_KeepsPublicAuthorizationEndpoint()
+    {
+        var result = await CreateService("http://keycloak:8080/realms/test").CreateAuthorizationRequestAsync(RedirectUri, CancellationToken.None);
+
+        Assert.StartsWith($"{Realm}/protocol/openid-connect/auth", result.Value.AuthorizationUrl, StringComparison.Ordinal);
     }
 
     [Fact]

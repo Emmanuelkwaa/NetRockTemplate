@@ -46,6 +46,15 @@ public sealed class KeycloakOptions : IValidatableObject
     public string? CallbackBaseUrl { get; init; }
 
     /// <summary>
+    /// Gets an optional realm URL the API uses to reach Keycloak on an internal network, for example
+    /// <c>http://keycloak:8080/realms/my-realm</c>, when the public <see cref="Authority"/> is not reachable
+    /// from the API container. Discovery, signing keys, token and logout calls go here; tokens are still
+    /// validated against <see cref="Authority"/>. Plain HTTP is allowed for this address only.
+    /// Keycloak must run with <c>KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true</c>.
+    /// </summary>
+    public string? InternalUrl { get; init; }
+
+    /// <summary>
     /// Gets the scopes requested in the authorization code flow.
     /// </summary>
     public string Scope { get; init; } = "openid profile email";
@@ -65,6 +74,11 @@ public sealed class KeycloakOptions : IValidatableObject
     /// </summary>
     public string ValidAudience => string.IsNullOrWhiteSpace(Audience) ? ClientId : Audience;
 
+    /// <summary>
+    /// Gets the realm URL used for back-channel calls: <see cref="InternalUrl"/> when set, otherwise <see cref="Issuer"/>.
+    /// </summary>
+    public string BackchannelRealmUrl => string.IsNullOrWhiteSpace(InternalUrl) ? Issuer : InternalUrl.TrimEnd('/');
+
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -77,6 +91,12 @@ public sealed class KeycloakOptions : IValidatableObject
             && (!Uri.TryCreate(CallbackBaseUrl, UriKind.Absolute, out var callback) || callback.Scheme is not ("https" or "http")))
         {
             yield return new ValidationResult("CallbackBaseUrl must be an absolute http(s) URL when set.", [nameof(CallbackBaseUrl)]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(InternalUrl)
+            && (!Uri.TryCreate(InternalUrl, UriKind.Absolute, out var internalUri) || internalUri.Scheme is not ("https" or "http")))
+        {
+            yield return new ValidationResult("InternalUrl must be an absolute http(s) URL of the Keycloak realm when set.", [nameof(InternalUrl)]);
         }
 
         if (LoginStateLifetime <= TimeSpan.Zero)

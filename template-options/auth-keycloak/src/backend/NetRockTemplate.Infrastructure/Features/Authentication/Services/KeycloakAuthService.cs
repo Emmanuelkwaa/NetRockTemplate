@@ -19,6 +19,7 @@ namespace NetRockTemplate.Infrastructure.Features.Authentication.Services;
 /// <summary>
 /// Runs the Keycloak authorization code flow with PKCE (S256) and the refresh and logout calls.
 /// Endpoints come from the realm's discovery document, shared with JWT bearer validation.
+/// With <see cref="KeycloakOptions.InternalUrl"/> set, back-channel calls use the internal address.
 /// </summary>
 internal sealed class KeycloakAuthService(
     IHttpClientFactory httpClientFactory,
@@ -158,7 +159,17 @@ internal sealed class KeycloakAuthService(
         form["client_secret"] = _options.ClientSecret;
 
         var client = httpClientFactory.CreateClient(HttpClientName);
-        return client.PostAsync(endpoint, new FormUrlEncodedContent(form), cancellationToken);
+        return client.PostAsync(ToBackchannel(endpoint), new FormUrlEncodedContent(form), cancellationToken);
+    }
+
+    // Keycloak advertises front-channel endpoints (such as logout) on the public hostname even when
+    // discovery is fetched internally, so rewrite public realm URLs to the internal one.
+    private string ToBackchannel(string endpoint)
+    {
+        var publicRealm = _options.Issuer + "/";
+        return _options.BackchannelRealmUrl != _options.Issuer && endpoint.StartsWith(publicRealm, StringComparison.Ordinal)
+            ? _options.BackchannelRealmUrl + "/" + endpoint[publicRealm.Length..]
+            : endpoint;
     }
 
     private async Task<OpenIdConnectConfiguration?> GetMetadataAsync(CancellationToken cancellationToken)
