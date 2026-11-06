@@ -11,7 +11,7 @@
 <!-- @init:end -->
 - [Aspire (Local Development)](#aspire-local-development)
 - [Backend Development](#backend-development)
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - [Frontend Development](#frontend-development)
 <!-- @init:end -->
 <!-- @init:if auth=jwt -->
@@ -248,7 +248,7 @@ Restart the API - the migration applies automatically on startup.
 
 ---
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ## Frontend Development
 
 ### `pnpm install` fails or produces a different lockfile
@@ -409,7 +409,7 @@ If your changes don't match these paths, the corresponding jobs won't run.
 
 ## Production Deployment
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ### SvelteKit CSRF errors in production (`403 Cross-site POST form submissions are forbidden`)
 
 **Cause:** SvelteKit requires the `ORIGIN` environment variable when running behind a TLS-terminating reverse proxy. Without it, form submissions and non-GET requests are rejected.

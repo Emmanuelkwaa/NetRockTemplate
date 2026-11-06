@@ -23,7 +23,7 @@ user-invocable: false
 - No authentication - every endpoint is anonymous
 <!-- @init:end -->
 - CSRF protection via Origin header validation on mutations
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - CSP with nonce-based script-src
 - API proxy in SvelteKit forwards cookies + headers
 <!-- @init:end -->

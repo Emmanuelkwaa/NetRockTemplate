@@ -12,7 +12,7 @@
 #   VERIFY_DIR   Work folder (default: a new temp folder, removed on success)
 #   FE_RUN       Command prefix that runs a shell command in a frontend folder:
 #                "$FE_RUN <dir> '<command>'". Default runs pnpm locally.
-#   ONLY         Space-separated combination filter, e.g. "auth=none" or "frontend=no"
+#   ONLY         Space-separated combination filter, e.g. "auth=none" or "stack=api"
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

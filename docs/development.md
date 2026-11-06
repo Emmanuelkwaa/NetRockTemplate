@@ -4,7 +4,7 @@
 
 ## Local Development (Aspire)
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 Aspire is the sole local development workflow. It starts all infrastructure (PostgreSQL, MinIO, MailPit) as containers and launches the API and frontend dev server.
 <!-- @init:else -->
 Aspire is the sole local development workflow. It starts all infrastructure (PostgreSQL, MinIO, MailPit) as containers and launches the API.

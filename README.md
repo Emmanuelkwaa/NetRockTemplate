@@ -53,7 +53,7 @@ Every project starts the same way: authentication, role management, rate limitin
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - [Node.js 22+](https://nodejs.org/) (run `corepack enable` for pnpm)
 <!-- @init:end -->
 - [Git](https://git-scm.com/)
@@ -92,7 +92,7 @@ Maintainers: `tools/init/verify-matrix.sh` builds and checks every option combin
 dotnet run --project src/backend/NetRockTemplate.AppHost
 ```
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 That's it. Aspire starts the infrastructure (PostgreSQL, MinIO, MailPit) as containers and launches the API and frontend dev server. The Aspire Dashboard URL appears in the console - all service URLs (API docs, pgAdmin, MinIO) are linked from the Dashboard.
 <!-- @init:else -->
 That's it. Aspire starts the infrastructure as containers and launches the API. The Aspire Dashboard URL appears in the console - all service URLs (API docs, pgAdmin, MinIO) are linked from the Dashboard.
@@ -101,7 +101,7 @@ That's it. Aspire starts the infrastructure as containers and launches the API. 
 | Service | URL |
 |---|---|
 | **Aspire Dashboard** | Shown in console output |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Frontend** | `http://localhost:<BASE_PORT>` (default: `http://localhost:13000`) |
 <!-- @init:else -->
 | **API docs** | `http://localhost:<BASE_PORT + 2>` (default: `http://localhost:13002`) |

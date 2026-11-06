@@ -24,7 +24,7 @@ env "Parameters__jwt-secret=..." "Parameters__public-url=https://app.example.com
 
 | Parameter | Used for |
 |---|---|
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | `public-url` | Public URL of the app: CORS origin, email links and the frontend `ORIGIN` |
 <!-- @init:else -->
 | `public-url` | Public URL of the API: CORS origin and email links |
@@ -48,7 +48,7 @@ The generated stack contains the API and the Aspire dashboard, plus:
 <!-- @init:if database=managed -->
 - PostgreSQL, with `Database__MigrateOnStartup=true` on the API
 <!-- @init:end -->
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - The frontend, built from `src/frontend/Dockerfile` (port 3000)
 <!-- @init:end -->
 - No pgAdmin, MinIO or Mailpit: those run in development only
@@ -66,7 +66,7 @@ docker compose up -d --build
 docker compose ps        # wait until api is healthy
 ```
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 The frontend listens on `HTTP_PORT` (default 3000) and proxies `/api/*` to the API on the internal network. The API is not published on the host.
 <!-- @init:else -->
 The API listens on `HTTP_PORT` (default 8080).

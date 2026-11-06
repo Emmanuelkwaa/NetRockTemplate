@@ -26,7 +26,7 @@
   ],
   "rules": [
     {
-      "when": "auth=keycloak,none",
+      "when": "backend=yes auth=keycloak,none",
       "delete": [
         "src/backend/NetRockTemplate.Application/Features/Admin",
         "src/backend/NetRockTemplate.Application/Features/Audit",
@@ -118,7 +118,7 @@
       ]
     },
     {
-      "when": "auth=none",
+      "when": "backend=yes auth=none",
       "delete": [
         "src/backend/NetRockTemplate.Application/Cookies",
         "src/backend/NetRockTemplate.Infrastructure/Cookies",
@@ -141,7 +141,7 @@
       ]
     },
     {
-      "when": "auth=keycloak",
+      "when": "backend=yes auth=keycloak",
       "overlay": "auth-keycloak",
       "json": [
         {
@@ -167,7 +167,7 @@
       ]
     },
     {
-      "when": "auth=keycloak,none frontend=yes",
+      "when": "auth=keycloak,none frontend=svelte",
       "delete": [
         "src/frontend/src/routes/(app)/admin",
         "src/frontend/src/routes/(app)/settings",
@@ -1185,7 +1185,7 @@
       ]
     },
     {
-      "when": "auth=none frontend=yes",
+      "when": "auth=none frontend=svelte",
       "delete": [
         "src/frontend/src/lib/auth",
         "src/frontend/src/lib/types",
@@ -1244,7 +1244,7 @@
       ]
     },
     {
-      "when": "auth=keycloak frontend=yes",
+      "when": "auth=keycloak frontend=svelte",
       "json": [
         {
           "file": "src/frontend/src/messages/en.json",
@@ -1263,7 +1263,7 @@
       ]
     },
     {
-      "when": "frontend=no",
+      "when": "frontend=none",
       "delete": [
         "src/frontend",
         ".claude/agents/frontend-engineer.md",

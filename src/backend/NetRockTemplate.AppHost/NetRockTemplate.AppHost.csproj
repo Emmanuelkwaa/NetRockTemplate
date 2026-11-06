@@ -11,7 +11,7 @@
         <!-- @init:if database=managed -->
         <PackageReference Include="Aspire.Hosting.PostgreSQL" />
         <!-- @init:end -->
-        <!-- @init:if frontend=yes -->
+        <!-- @init:if frontend=svelte -->
         <PackageReference Include="Aspire.Hosting.JavaScript" />
         <!-- @init:end -->
         <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" />

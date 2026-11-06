@@ -41,7 +41,7 @@ NETrock works out of the box for local development, but there are things you nee
 
 ## Should Do
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - [ ] **TLS termination** - the containers expose API (8080) and frontend (3000) as plain HTTP. Put a reverse proxy (nginx, Caddy, Traefik) in front to terminate TLS, or use your platform's built-in TLS (Coolify, Railway, etc.). Set `ORIGIN=https://your-domain.com` in the frontend env so SvelteKit generates correct URLs
 <!-- @init:else -->
 - [ ] **TLS termination** - the API container exposes port 8080 as plain HTTP. Put a reverse proxy (nginx, Caddy, Traefik) in front to terminate TLS, or use your platform's built-in TLS (Coolify, Railway, etc.)

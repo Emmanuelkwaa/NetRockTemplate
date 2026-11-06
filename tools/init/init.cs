@@ -28,7 +28,7 @@ sealed class Settings
     public string? Auth { get; set; }
     public string? Deploy { get; set; }
     public string? Database { get; set; }
-    public string? Frontend { get; set; }
+    public string? Stack { get; set; }
     public string? KeycloakAuthority { get; set; }
     public string? KeycloakClientId { get; set; }
     public string? KeycloakClientSecret { get; set; }
@@ -38,25 +38,57 @@ sealed class Settings
     public bool? Aspire { get; set; }
 
     public int ApiPort => Port!.Value + 2;
+
+    /// <summary>The selected options as one line, for the initial commit message.</summary>
+    public string Describe() => HasBackend
+        ? $"stack={Stack}, auth={Auth}, deploy={Deploy}, database={Database}"
+        : $"stack={Stack}, deploy={Deploy}";
     public string Slug => Regex.Replace(Name!, "([a-z0-9])([A-Z])", "$1-$2").ToLowerInvariant();
 
+    /// <summary>True for every stack except <c>blazor</c>, which has no backend API.</summary>
+    public bool HasBackend => Stack != "blazor";
+
+    /// <summary>The frontend kind derived from the stack: <c>svelte</c>, <c>blazor</c> or <c>none</c>.</summary>
+    public string Frontend => Stack switch
+    {
+        "api-svelte" => "svelte",
+        "api-blazor" or "blazor" => "blazor",
+        _ => "none"
+    };
+
+    /// <summary>Values that <c>@init:if</c> conditions and manifest rules are evaluated against.</summary>
     public IReadOnlyDictionary<string, string> Options => new Dictionary<string, string>
     {
-        ["auth"] = Auth!,
+        ["auth"] = HasBackend ? Auth! : "none",
         ["deploy"] = Deploy!,
-        ["database"] = Database!,
-        ["frontend"] = Frontend!
+        ["database"] = HasBackend ? Database! : "none",
+        ["frontend"] = Frontend,
+        ["backend"] = HasBackend ? "yes" : "no"
     };
 }
 
 static class Cli
 {
+    /// <summary>Values accepted on the command line and in prompts.</summary>
     public static readonly Dictionary<string, string[]> Choices = new()
+    {
+        ["stack"] = ["api-svelte", "api-blazor", "api", "blazor"],
+        ["auth"] = ["jwt", "keycloak", "none"],
+        ["deploy"] = ["aspire", "compose"],
+        ["database"] = ["managed", "external"]
+    };
+
+    /// <summary>
+    /// Keys and values that conditions may use. <c>frontend</c> and <c>backend</c> are derived from the stack,
+    /// and <c>blazor</c> projects evaluate with <c>auth=none</c> and <c>database=none</c>.
+    /// </summary>
+    public static readonly Dictionary<string, string[]> ConditionKeys = new()
     {
         ["auth"] = ["jwt", "keycloak", "none"],
         ["deploy"] = ["aspire", "compose"],
-        ["database"] = ["managed", "external"],
-        ["frontend"] = ["yes", "no"]
+        ["database"] = ["managed", "external", "none"],
+        ["frontend"] = ["svelte", "blazor", "none"],
+        ["backend"] = ["yes", "no"]
     };
 
     public static int Run(string[] args, string templateRoot)
@@ -136,7 +168,7 @@ static class Cli
                 case "--auth": s.Auth = Choice("auth", Value()); break;
                 case "--deploy": s.Deploy = Choice("deploy", Value()); break;
                 case "--database": s.Database = Choice("database", Value()); break;
-                case "--frontend": s.Frontend = Choice("frontend", Value()); break;
+                case "--stack": s.Stack = Choice("stack", Value()); break;
                 case "--keycloak-authority": s.KeycloakAuthority = Value(); break;
                 case "--keycloak-client-id": s.KeycloakClientId = Value(); break;
                 case "--keycloak-client-secret": s.KeycloakClientSecret = Value(); break;
@@ -175,10 +207,14 @@ static class Cli
               -o, --output DIR           Output folder (default: ../NAME). Must be empty or missing
 
             Options:
-                  --auth MODE            jwt | keycloak | none          (default: jwt)
+                  --stack TYPE           api-svelte | api-blazor | api | blazor   (default: api-svelte)
+                                           api-svelte  Backend API with the SvelteKit frontend
+                                           api-blazor  Backend API with a Blazor SSR frontend (stock .NET template)
+                                           api         Backend API only
+                                           blazor      Blazor SSR only, no backend
+                  --auth MODE            jwt | keycloak | none          (default: jwt, not for blazor)
                   --deploy MODE          aspire | compose               (default: aspire)
-                  --database MODE        managed | external             (default: managed)
-                  --frontend yes|no      Include the SvelteKit frontend  (default: yes)
+                  --database MODE        managed | external             (default: managed, not for blazor)
 
             JWT:
               -e, --email EMAIL          Superuser email (default: superuser@test.com)
@@ -198,7 +234,8 @@ static class Cli
 
             Examples:
               ./init.sh --name MyApi --yes
-              ./init.sh -n MyApi --auth none --frontend no --deploy compose -y
+              ./init.sh -n MyApi --stack api --auth none --deploy compose -y
+              ./init.sh -n MySite --stack blazor -y
             """);
     }
 
@@ -220,10 +257,19 @@ static class Prompts
         s.Port ??= s.Yes ? 13000 : AskPort();
         if (s.Port is < 1024 or > 65527) throw new InitException("Port must be between 1024 and 65527");
 
-        s.Auth ??= s.Yes ? "jwt" : Ui.Choose("Authentication", Cli.Choices["auth"], "jwt");
+        s.Stack ??= s.Yes ? "api-svelte" : Ui.Choose("Project type", Cli.Choices["stack"], "api-svelte");
+        if (!s.HasBackend)
+        {
+            if (s.Auth is not null) throw new InitException("--auth does not apply to --stack blazor (it has no backend)");
+            if (s.Database is not null) throw new InitException("--database does not apply to --stack blazor (it has no backend)");
+        }
+        else
+        {
+            s.Auth ??= s.Yes ? "jwt" : Ui.Choose("Authentication", Cli.Choices["auth"], "jwt");
+        }
+
         s.Deploy ??= s.Yes ? "aspire" : Ui.Choose("Production deployment", Cli.Choices["deploy"], "aspire");
-        s.Database ??= s.Yes ? "managed" : Ui.Choose("PostgreSQL", Cli.Choices["database"], "managed");
-        s.Frontend ??= s.Yes ? "yes" : Ui.Choose("SvelteKit frontend", Cli.Choices["frontend"], "yes");
+        if (s.HasBackend) s.Database ??= s.Yes ? "managed" : Ui.Choose("PostgreSQL", Cli.Choices["database"], "managed");
 
         if (s.Auth == "jwt")
         {
@@ -234,6 +280,12 @@ static class Prompts
         {
             Ui.Warn("--email and --password only apply to --auth jwt and are ignored");
             s.Email = s.Password = null;
+        }
+
+        if (s.Auth != "keycloak" && (s.KeycloakAuthority ?? s.KeycloakClientId ?? s.KeycloakClientSecret) is not null)
+        {
+            Ui.Warn("--keycloak-* options only apply to --auth keycloak and are ignored");
+            s.KeycloakAuthority = s.KeycloakClientId = s.KeycloakClientSecret = null;
         }
 
         if (s.Auth == "keycloak")
@@ -251,7 +303,8 @@ static class Prompts
         var defaultOutput = Path.GetFullPath(Path.Combine(templateRoot, "..", s.Name!));
         s.Output = Path.GetFullPath(s.Output ?? (s.Yes ? defaultOutput : Ui.Ask("Output folder", defaultOutput)));
 
-        s.Migration ??= s.Yes || Ui.Confirm("Create the initial database migration?", true);
+        if (s.HasBackend) s.Migration ??= s.Yes || Ui.Confirm("Create the initial database migration?", true);
+        else s.Migration = false;
         s.Commit ??= s.Yes || Ui.Confirm("Run git init and commit?", true);
         s.Aspire ??= s.Yes || Ui.Confirm("Launch Aspire after setup?", true);
     }
@@ -274,7 +327,7 @@ static class Prerequisites
     public static void Check(Settings s)
     {
         var required = new List<string> { "git", "dotnet", "docker" };
-        if (s.Frontend == "yes") required.AddRange(["node", "pnpm"]);
+        if (s.Frontend == "svelte") required.AddRange(["node", "pnpm"]);
 
         var missing = required.Where(tool => !Shell.Exists(tool)).ToList();
         if (missing.Count > 0)
@@ -341,7 +394,7 @@ static class Generator
         Ui.Step("Generating secrets");
         ReplaceSecrets(output, manifest);
 
-        if (s.Frontend == "yes")
+        if (s.Frontend == "svelte")
         {
             var envExample = Path.Combine(output, "src", "frontend", ".env.example");
             if (File.Exists(envExample)) File.Copy(envExample, Path.Combine(output, "src", "frontend", ".env.local"));
@@ -349,12 +402,15 @@ static class Generator
 
         Validate(output);
 
-        var appHost = Path.Combine(output, "src", "backend", $"{s.Name}.AppHost");
-        Ui.Step("Writing development user secrets");
-        WriteUserSecrets(s, appHost);
+        if (s.HasBackend)
+        {
+            var appHost = Path.Combine(output, "src", "backend", $"{s.Name}.AppHost");
+            Ui.Step("Writing development user secrets");
+            WriteUserSecrets(s, appHost);
 
-        Ui.Step("Preparing database migrations");
-        Migrations.Regenerate(s, output);
+            Ui.Step("Preparing database migrations");
+            Migrations.Regenerate(s, output);
+        }
 
         if (s.Commit == true)
         {
@@ -362,7 +418,7 @@ static class Generator
             Shell.Run("git", ["init", "--quiet"], output);
             Shell.Run("git", ["add", "-A"], output);
             Shell.Run("git", ["-c", "commit.gpgsign=false", "commit", "--quiet", "-m",
-                $"chore: initialize {s.Name} from NETrock template\n\nOptions: auth={s.Auth}, deploy={s.Deploy}, database={s.Database}, frontend={s.Frontend}"], output);
+                $"chore: initialize {s.Name} from NETrock template\n\nOptions: {s.Describe()}"], output);
         }
 
         return output;
@@ -620,7 +676,7 @@ static class NextSteps
 
         if (s.Auth == "keycloak")
         {
-            var baseUrl = s.Frontend == "yes" ? $"http://localhost:{s.Port}" : $"http://localhost:{s.ApiPort}";
+            var baseUrl = s.Frontend == "svelte" ? $"http://localhost:{s.Port}" : $"http://localhost:{s.ApiPort}";
             Ui.Warn("Keycloak: create a confidential OpenID Connect client in your realm with:");
             Ui.Sub("Client authentication on, Standard flow on, PKCE method S256");
             Ui.Sub($"Valid redirect URI:  {baseUrl}/api/auth/keycloak/callback");
@@ -651,7 +707,7 @@ static class NextSteps
 }
 
 /// <summary>
-/// Evaluates option conditions such as <c>auth=jwt,keycloak frontend=yes</c> (all terms must match).
+/// Evaluates option conditions such as <c>auth=jwt,keycloak frontend=svelte</c> (all terms must match).
 /// The term <c>template</c> is always false, for template-only content.
 /// </summary>
 static class Conditions
@@ -665,7 +721,7 @@ static class Conditions
 
             var negate = term.Contains("!=");
             var parts = term.Split(negate ? "!=" : "=", 2);
-            if (parts.Length != 2 || !Cli.Choices.TryGetValue(parts[0], out var allowed))
+            if (parts.Length != 2 || !Cli.ConditionKeys.TryGetValue(parts[0], out var allowed))
             {
                 throw new InitException($"Invalid condition term '{term}'");
             }
@@ -1045,15 +1101,16 @@ static class Ui
     {
         Header("Summary");
         Console.WriteLine($"  Name:        {s.Name} (slug {s.Slug})");
-        Console.WriteLine($"  Ports:       frontend {s.Port}, API {s.ApiPort}");
-        Console.WriteLine($"  Auth:        {s.Auth}");
+        Console.WriteLine($"  Stack:       {s.Stack}");
+        Console.WriteLine(s.HasBackend ? $"  Ports:       frontend {s.Port}, API {s.ApiPort}" : $"  Port:        {s.Port}");
+        if (s.HasBackend) Console.WriteLine($"  Auth:        {s.Auth}");
         Console.WriteLine($"  Deploy:      {s.Deploy}");
-        Console.WriteLine($"  Database:    {s.Database}");
-        Console.WriteLine($"  Frontend:    {s.Frontend}");
+        if (s.HasBackend) Console.WriteLine($"  Database:    {s.Database}");
         if (s.Auth == "jwt") Console.WriteLine($"  Superuser:   {s.Email}");
         if (s.Auth == "keycloak") Console.WriteLine($"  Keycloak:    {(string.IsNullOrEmpty(s.KeycloakAuthority) ? "(set later)" : s.KeycloakAuthority)}");
         Console.WriteLine($"  Output:      {s.Output}");
-        Console.WriteLine($"  Migration:   {(s.Migration == true ? "yes" : "no")}, git: {(s.Commit == true ? "yes" : "no")}, launch Aspire: {(s.Aspire == true ? "yes" : "no")}");
+        var migration = s.HasBackend ? $"Migration:   {(s.Migration == true ? "yes" : "no")}, " : "";
+        Console.WriteLine($"  {migration}git: {(s.Commit == true ? "yes" : "no")}, launch Aspire: {(s.Aspire == true ? "yes" : "no")}");
         Console.WriteLine();
     }
 }

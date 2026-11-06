@@ -37,7 +37,7 @@ NETrock is built **security-first**. Every decision defaults to the most restric
 - **Role hierarchy protection** - Superuser > Admin > User, with privilege escalation prevention (can't assign roles at or above your own rank, can't grant permissions you don't have)
 - **Self-protection rules** - can't lock your own account, can't delete yourself, can't remove your own roles
 - **System role guards** - Superuser/Admin/User cannot be deleted or renamed, Superuser permissions are implicit (never stored in DB)
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - **Frontend mirrors backend** - route guards, nav filtering, and conditional rendering use the same permission claims, but the backend is always authoritative
 <!-- @init:end -->
 
@@ -72,7 +72,7 @@ NETrock is built **security-first**. Every decision defaults to the most restric
 ## Transport & Headers
 
 - **CORS production safeguard** - startup guard rejects `AllowAllOrigins` in non-development environments
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 <!-- @init:if auth=jwt -->
 - **CSP with nonce mode** - script-src locked down, Turnstile CAPTCHA whitelisted explicitly
 <!-- @init:else -->
@@ -80,7 +80,7 @@ NETrock is built **security-first**. Every decision defaults to the most restric
 <!-- @init:end -->
 <!-- @init:end -->
 - **Security headers on every response** - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, HSTS in production
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - **CSRF protection** - Origin header validation in the SvelteKit API proxy for all state-changing requests
 <!-- @init:else -->
 - **CSRF protection** - `OriginValidationMiddleware` validates the Origin header on all state-changing requests
@@ -97,7 +97,7 @@ NETrock is built **security-first**. Every decision defaults to the most restric
 <!-- @init:if auth=none -->
 - **Rate limiting** - global limiter partitioned by client IP, configurable per environment
 <!-- @init:end -->
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 - **Visible feedback** - rate-limited actions show countdown timers ("Wait Xs") instead of silently failing
 <!-- @init:end -->
 - **Input validation everywhere** - FluentValidation on backend (even if frontend already validates), Data Annotations flowing into OpenAPI spec

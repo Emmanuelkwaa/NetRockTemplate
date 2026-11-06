@@ -24,7 +24,7 @@ try {
   console.log('MISSING .NET SDK');
 }
 
-// @init:if frontend=yes
+// @init:if frontend=svelte
 // pnpm
 try {
   console.log(run('pnpm --version', { cwd: resolve(projectDir, 'src/frontend') }));

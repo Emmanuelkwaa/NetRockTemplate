@@ -110,7 +110,7 @@ if (builder.ExecutionContext.IsRunMode)
             .WithEnvironment("Seed__Users__0__Role", "Superuser");
     }
 // @init:end
-// @init:if frontend=yes uncomment
+// @init:if frontend=svelte uncomment
 //
 //     // ── Frontend (SvelteKit) ────────────────────────────────────────────────
 //     builder.AddViteApp("frontend", "../../../src/frontend")
@@ -141,7 +141,7 @@ if (builder.ExecutionContext.IsRunMode)
 // @init:if database=managed
 //     api.WithEnvironment("Database__MigrateOnStartup", "true");
 // @init:end
-// @init:if frontend=yes
+// @init:if frontend=svelte
 //
 //     // Production image from src/frontend/Dockerfile (adapter-node on port 3000).
 //     builder.AddDockerfile("frontend", "../../../src/frontend")

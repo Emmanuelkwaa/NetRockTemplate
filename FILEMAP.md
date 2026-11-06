@@ -10,33 +10,33 @@ Quick-reference for "when you change X, also update Y" and "where does X live?"
 
 | Change | Must also update |
 |---|---|
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Add/change domain entity property** | EF config → migration → Application DTOs → WebApi DTOs → mapper → `pnpm run api:generate` → frontend |
 | **Add backend endpoint** | Controller + DTOs + validator + mapper → `pnpm run api:generate` → frontend types → frontend calls |
 <!-- @init:else -->
 | **Add/change domain entity property** | EF config → migration → Application DTOs → WebApi DTOs → mapper |
 | **Add backend endpoint** | Controller + DTOs + validator + mapper + tests |
 <!-- @init:end -->
-<!-- @init:if auth=jwt frontend=yes -->
+<!-- @init:if auth=jwt frontend=svelte -->
 | **Change WebApi response DTO** | Mapper, `Api.Tests/Contracts/ResponseContracts.cs`, `pnpm run api:generate`, frontend components |
 <!-- @init:end -->
-<!-- @init:if auth=jwt frontend=no -->
+<!-- @init:if auth=jwt frontend=none -->
 | **Change WebApi response DTO** | Mapper, `Api.Tests/Contracts/ResponseContracts.cs` |
 <!-- @init:end -->
-<!-- @init:if auth=keycloak,none frontend=yes -->
+<!-- @init:if auth=keycloak,none frontend=svelte -->
 | **Change WebApi response DTO** | Mapper, API tests, `pnpm run api:generate`, frontend components |
 <!-- @init:end -->
-<!-- @init:if auth=keycloak,none frontend=no -->
+<!-- @init:if auth=keycloak,none frontend=none -->
 | **Change WebApi response DTO** | Mapper, API tests |
 <!-- @init:end -->
 <!-- @init:if auth=jwt -->
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Add permission** | `AppPermissions.cs` → `[RequirePermission]` → seed in `ApplicationBuilderExtensions` → frontend `permissions.ts` → sidebar + page guards |
 <!-- @init:else -->
 | **Add permission** | `AppPermissions.cs` → `[RequirePermission]` → seed in `ApplicationBuilderExtensions` |
 <!-- @init:end -->
 <!-- @init:end -->
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Add i18n key** | Both `en.json` AND `cs.json` - always both files |
 <!-- @init:end -->
 
@@ -48,42 +48,42 @@ Quick-reference for "when you change X, also update Y" and "where does X live?"
 
 | When you change... | Also update... |
 |---|---|
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Domain entity** (add/rename property) | EF configuration, migration, Application DTOs, WebApi DTOs, mapper, frontend types (`pnpm run api:generate`) |
 <!-- @init:else -->
 | **Domain entity** (add/rename property) | EF configuration, migration, Application DTOs, WebApi DTOs, mapper |
 <!-- @init:end -->
 | **Domain entity** (add enum property) | EF config (`.HasComment()`), `EnumSchemaTransformer` handles the rest automatically |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **`ErrorMessages.cs`** (Shared - add/rename constant) | Service that uses it; frontend may display message directly |
 <!-- @init:else -->
 | **`ErrorMessages.cs`** (Shared - add/rename constant) | Service that uses it; API clients may display the message directly |
 <!-- @init:end -->
 | **`Result.cs`** (Shared - change pattern) | Every service + every controller that matches on `Result` |
 | **Application interface** (change signature) | Infrastructure service implementation, controller calling the service |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Application DTO** (add/rename/remove field) | Infrastructure service, WebApi mapper, WebApi request/response DTO, frontend types |
 <!-- @init:else -->
 | **Application DTO** (add/rename/remove field) | Infrastructure service, WebApi mapper, WebApi request/response DTO |
 <!-- @init:end -->
 | **Infrastructure Options class** | `appsettings.json`, `appsettings.Development.json` (excluded from production publish - see `StripDevConfig`), DI registration |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **WebApi controller** (change route/method) | Frontend API calls, `v1.d.ts` regeneration |
 | **WebApi request DTO** (add/rename/remove property) | Validator, mapper, frontend types, frontend form |
 <!-- @init:else -->
 | **WebApi controller** (change route/method) | API tests, any documented client integration |
 | **WebApi request DTO** (add/rename/remove property) | Validator, mapper, validator tests |
 <!-- @init:end -->
-<!-- @init:if auth=jwt frontend=yes -->
+<!-- @init:if auth=jwt frontend=svelte -->
 | **WebApi response DTO** (add/rename/remove property) | Mapper, frontend types, frontend component displaying data, `Api.Tests/Contracts/ResponseContracts.cs` |
 <!-- @init:end -->
-<!-- @init:if auth=jwt frontend=no -->
+<!-- @init:if auth=jwt frontend=none -->
 | **WebApi response DTO** (add/rename/remove property) | Mapper, `Api.Tests/Contracts/ResponseContracts.cs` |
 <!-- @init:end -->
-<!-- @init:if auth=keycloak,none frontend=yes -->
+<!-- @init:if auth=keycloak,none frontend=svelte -->
 | **WebApi response DTO** (add/rename/remove property) | Mapper, frontend types, frontend component displaying data, API tests |
 <!-- @init:end -->
-<!-- @init:if auth=keycloak,none frontend=no -->
+<!-- @init:if auth=keycloak,none frontend=none -->
 | **WebApi response DTO** (add/rename/remove property) | Mapper, API tests |
 <!-- @init:end -->
 | **`Program.cs`** (change middleware order) | Test full request pipeline - order matters for CORS, rate limiting and any auth middleware; update `CustomWebApplicationFactory` if new services need mocking |
@@ -146,11 +146,11 @@ Quick-reference for "when you change X, also update Y" and "where does X live?"
 | **`RateLimiterExtensions.cs`** (add policy) | Requires matching constant in `RateLimitPolicies.cs` and config in `RateLimitingOptions.cs` |
 | **`HostingOptions.cs`** (change hosting config shape) | `HostingExtensions.cs`, `appsettings.json`, `appsettings.Development.json` |
 | **`Dockerfile`** (backend - change build/publish steps) | `.dockerignore`, verify published files don't include dev/test config |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **`Dockerfile`** (frontend - change build steps) | `.dockerignore`, `.npmrc` (copied into image for install-affecting settings), `docker.yml` build args. New `PUBLIC_*` SvelteKit env vars need `ARG`+`ENV` in Dockerfile (before `pnpm run build`), `--build-arg` in `docker.yml`. For runtime env vars, prefer `$env/dynamic/private` with SSR layout data |
 <!-- @init:end -->
 | **`NetRockTemplate.WebApi.csproj`** (add appsettings file) | If non-production: add `CopyToPublishDirectory="Never"` and matching `rm -f` in `Dockerfile` |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **`HealthCheckExtensions.cs`** (change endpoints/checks) | Frontend health proxy `+server.ts`, Dockerfile healthcheck command |
 <!-- @init:else -->
 | **`HealthCheckExtensions.cs`** (change endpoints/checks) | Dockerfile healthcheck command |
@@ -163,12 +163,12 @@ Quick-reference for "when you change X, also update Y" and "where does X live?"
 | **`ProblemDetailsAuthorizationHandler`** | `ProblemDetails` shape, `ErrorMessages.Auth` constants, `Program.cs` registration |
 | **`CaptchaOptions`** (Infrastructure - Captcha config) | `appsettings.json`, `appsettings.Development.json`, `appsettings.Testing.json`, `TurnstileCaptchaService`, `ServiceCollectionExtensions` |
 | **`TurnstileCaptchaService`** (Infrastructure - Captcha service) | `ICaptchaService` interface, `CaptchaOptions`, `AuthController` captcha gate |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **`TurnstileWidget.svelte`** (Frontend - Captcha widget) | `RegisterForm.svelte`, `ForgotPasswordForm.svelte`, `app.d.ts` (`Window.turnstile`), `TURNSTILE_SITE_KEY` env var (runtime-configurable via `$env/dynamic/private` and SSR layout data) |
 <!-- @init:end -->
 <!-- @init:end -->
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ### Frontend Changes
 
 | When you change... | Also update... |
@@ -226,7 +226,7 @@ Quick-reference for "when you change X, also update Y" and "where does X live?"
 
 | When you change... | Also update... |
 |---|---|
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **Backend endpoint route** | Frontend API calls + regenerate types |
 | **Backend response shape** | Regenerate types → update frontend components |
 <!-- @init:if auth=jwt,keycloak -->
@@ -238,12 +238,12 @@ Quick-reference for "when you change X, also update Y" and "where does X live?"
 <!-- @init:else -->
 | **`appsettings.Development.json`** (add dev config override) | Keep standalone defaults (ConnectionStrings, FileStorage) in sync with `NetRockTemplate.AppHost/appsettings.json` parameters |
 <!-- @init:end -->
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **`.env.example`** (frontend) | `src/frontend/.env.test` if new `PUBLIC_*` var added |
 | **`.env.test`** (frontend) | `ci.yml` loads it via `cp .env.test .env`; keep in sync with `.env.example` vars |
 <!-- @init:end -->
 | **`NetRockTemplate.AppHost/Program.cs`** (add env var or parameter) | Verify `appsettings.Development.json` standalone defaults match |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | **CORS config** (`CorsExtensions.cs`) | Frontend dev server origin, `ALLOWED_ORIGINS` env var |
 | **Rate limiting config** | Frontend may need retry/backoff logic |
 <!-- @init:else -->
@@ -302,7 +302,7 @@ src/backend/NetRockTemplate.{Layer}/
                    Program.cs
 ```
 
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 ### Frontend Naming Patterns
 
 ```
@@ -424,7 +424,7 @@ src/backend/tests/
 | `src/backend/NetRockTemplate.Application/Identity/Constants/AppPermissions.cs` | Permission definitions (reflection-discovered) |
 | `src/backend/NetRockTemplate.Application/Caching/Constants/CacheKeys.cs` | Cache key constants (used across services) |
 | `src/backend/NetRockTemplate.Application/Features/Email/EmailTemplateNames.cs` | Email template name constants |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | `src/frontend/src/lib/utils/permissions.ts` | Frontend permission constants + helpers |
 <!-- @init:end -->
 <!-- @init:end -->
@@ -433,7 +433,7 @@ src/backend/tests/
 <!-- @init:end -->
 | `src/backend/NetRockTemplate.WebApi/Shared/RateLimitPolicies.cs` | Rate limit policy name constants |
 | `src/backend/Directory.Packages.props` | NuGet versions (never in .csproj) |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | `src/frontend/src/lib/components/layout/AppSidebar.svelte` | Navigation entries + command palette trigger |
 | `src/frontend/src/lib/components/layout/ContentHeader.svelte` | Desktop breadcrumb header + sidebar toggle (keep route labels in sync with AppSidebar) |
 | `src/frontend/src/lib/components/layout/CommandPalette.svelte` | Command palette entries (keep in sync with AppSidebar) |
@@ -443,7 +443,7 @@ src/backend/tests/
 | `src/backend/NetRockTemplate.WebApi/appsettings.Testing.json` | Test environment config (disables Hangfire, caching, CORS) |
 | `src/backend/tests/NetRockTemplate.Api.Tests/Fixtures/CustomWebApplicationFactory.cs` | Test host configuration for API tests |
 | `src/backend/NetRockTemplate.ServiceDefaults/Extensions.cs` | Aspire shared: OTEL, service discovery, HTTP resilience defaults |
-<!-- @init:if frontend=yes -->
+<!-- @init:if frontend=svelte -->
 | `src/backend/NetRockTemplate.AppHost/Program.cs` | Aspire orchestrator: local dev (PostgreSQL, MinIO, MailPit, API, Frontend) |
 <!-- @init:else -->
 | `src/backend/NetRockTemplate.AppHost/Program.cs` | Aspire orchestrator: local dev (PostgreSQL, MinIO, MailPit, API) |

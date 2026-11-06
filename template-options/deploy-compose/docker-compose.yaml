@@ -45,7 +45,7 @@ services:
       Email__Smtp__Password: ${Email__Smtp__Password:-}
       Email__Smtp__UseSsl: ${Email__Smtp__UseSsl:-true}
       Cors__AllowedOrigins__0: ${PUBLIC_URL}
-# @init:if frontend=yes
+# @init:if frontend=svelte
     expose:
       - "8080"
 # @init:else
@@ -68,7 +68,7 @@ services:
       - app
       # - coolify
 
-# @init:if frontend=yes
+# @init:if frontend=svelte
   frontend:
     build:
       context: ./src/frontend
