@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NetRockTemplate.Api.Tests.Fixtures;
 using NetRockTemplate.Application.Cookies.Constants;
@@ -50,6 +51,25 @@ public class AuthControllerTests : IClassFixture<CustomWebApplicationFactory>, I
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal(AuthorizationUrl, response.Headers.Location?.ToString());
         await _factory.KeycloakAuthService.Received(1).CreateAuthorizationRequestAsync(RedirectUri, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Login_WithCallbackBaseUrl_UsesItForTheRedirectUri()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+            builder.UseSetting("Authentication:Keycloak:CallbackBaseUrl", "https://api.example.com/"));
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            BaseAddress = new Uri("https://localhost"),
+            HandleCookies = false
+        });
+
+        var response = await client.GetAsync("/api/auth/keycloak/login");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        await _factory.KeycloakAuthService.Received(1)
+            .CreateAuthorizationRequestAsync("https://api.example.com/api/auth/keycloak/callback", Arg.Any<CancellationToken>());
     }
 
     [Fact]

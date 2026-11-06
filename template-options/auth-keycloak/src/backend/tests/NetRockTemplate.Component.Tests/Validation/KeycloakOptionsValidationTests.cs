@@ -45,6 +45,27 @@ public class KeycloakOptionsValidationTests
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(KeycloakOptions.ClientSecret)));
     }
 
+    [Theory]
+    [InlineData("not-a-url")]
+    [InlineData("ftp://api.example.com")]
+    public void CallbackBaseUrl_Invalid_ReturnsError(string callbackBaseUrl)
+    {
+        var options = new KeycloakOptions { Authority = "https://a.example.com/realms/x", ClientId = "app", ClientSecret = "s", CallbackBaseUrl = callbackBaseUrl };
+
+        Assert.Contains(Validate(options), r => r.MemberNames.Contains(nameof(KeycloakOptions.CallbackBaseUrl)));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("https://api.example.com")]
+    public void CallbackBaseUrl_EmptyOrAbsolute_NoErrors(string? callbackBaseUrl)
+    {
+        var options = new KeycloakOptions { Authority = "https://a.example.com/realms/x", ClientId = "app", ClientSecret = "s", CallbackBaseUrl = callbackBaseUrl };
+
+        Assert.Empty(Validate(options));
+    }
+
     [Fact]
     public void Issuer_TrimsTrailingSlash()
     {
