@@ -14,7 +14,7 @@ var minioPort = frontendPort + 5;
 var minioConsolePort = frontendPort + 6;
 var mailpitSmtpPort = frontendPort + 7;
 var mailpitHttpPort = frontendPort + 8;
-// @init:if keycloak-dev=managed uncomment
+// @init:if keycloak-aspire=yes uncomment
 // var keycloakPort = frontendPort + 9;
 // @init:end
 // @init:end
@@ -196,7 +196,53 @@ if (builder.ExecutionContext.IsRunMode)
 // @init:if auth=keycloak frontend=blazor
 //
 //     // Keycloak redirects back to the API, which is public next to the Blazor frontend.
-//     api.WithEnvironment("Authentication__Keycloak__CallbackBaseUrl", builder.AddParameter("api-public-url"));
+//     var apiPublicUrl = builder.AddParameter("api-public-url");
+//     api.WithEnvironment("Authentication__Keycloak__CallbackBaseUrl", apiPublicUrl);
+// @init:end
+// @init:if keycloak-prod=managed
+//
+//     // The stack's own Keycloak in production mode (start), behind a TLS-terminating proxy.
+//     // keycloak/prod/realm.json is imported once (no users); an existing realm is left unchanged.
+//     var keycloakPublicUrl = builder.AddParameter("keycloak-public-url");
+//     var keycloakDbPassword = builder.AddParameter("keycloak-db-password", secret: true);
+//     var keycloak = builder.AddKeycloak("keycloak", keycloakPort,
+//             adminUsername: builder.AddParameter("keycloak-admin-username"),
+//             adminPassword: builder.AddParameter("keycloak-admin-password", secret: true))
+//         .WithImageTag("26.4.7")
+//         .WithBindMount("../../../keycloak/prod", "/opt/keycloak/data/import", isReadOnly: true)
+//         .WithEnvironment("KC_DB", "postgres")
+// @init:if database=managed
+//         .WithEnvironment("KC_DB_URL", "jdbc:postgresql://db:5432/keycloak")
+//         .WithEnvironment("KC_DB_USERNAME", "keycloak")
+// @init:else
+//         .WithEnvironment("KC_DB_URL", builder.AddParameter("keycloak-db-url"))
+//         .WithEnvironment("KC_DB_USERNAME", builder.AddParameter("keycloak-db-username"))
+// @init:end
+//         .WithEnvironment("KC_DB_PASSWORD", keycloakDbPassword)
+//         .WithEnvironment("KC_HOSTNAME", keycloakPublicUrl)
+//         .WithEnvironment("KC_HOSTNAME_BACKCHANNEL_DYNAMIC", "true")
+//         .WithEnvironment("KC_HTTP_ENABLED", "true")
+//         .WithEnvironment("KC_PROXY_HEADERS", "xforwarded")
+//         .WithEnvironment("KC_CLIENT_SECRET", keycloakClientSecret)
+// @init:if frontend=blazor
+//         .WithEnvironment("KC_CALLBACK_BASE_URL", apiPublicUrl)
+// @init:else
+//         .WithEnvironment("KC_CALLBACK_BASE_URL", publicUrl)
+// @init:end
+//         .WithEnvironment("KC_WEB_ORIGIN", publicUrl)
+//         .WithExternalHttpEndpoints();
+// @init:if database=managed
+//
+//     // Creates Keycloak's database and login when the Postgres volume is empty.
+//     postgres.WithInitBindMount("../../../keycloak/postgres-init")
+//         .WithEnvironment("KEYCLOAK_DB_PASSWORD", keycloakDbPassword);
+//     keycloak.WaitFor(postgres);
+// @init:end
+//
+//     api.WithEnvironment("Authentication__Keycloak__Authority", ReferenceExpression.Create($"{keycloakPublicUrl.Resource}/realms/net-rock-template"))
+//         .WithEnvironment("Authentication__Keycloak__ClientId", "net-rock-template")
+//         .WithEnvironment("Authentication__Keycloak__InternalUrl", ReferenceExpression.Create($"{keycloak.GetEndpoint("http")}/realms/net-rock-template"))
+//         .WaitFor(keycloak);
 // @init:end
 // @init:if frontend=svelte
 //

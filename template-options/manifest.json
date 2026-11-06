@@ -1351,6 +1351,10 @@
       "overlay": "deploy-compose"
     },
     {
+      "when": "keycloak-prod=managed database=managed",
+      "overlay": "keycloak-postgres-init"
+    },
+    {
       "when": "auth=jwt,none",
       "delete": [
         "docs/keycloak.md"

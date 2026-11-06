@@ -32,6 +32,13 @@ services:
       Authentication__Keycloak__ClientId: ${Authentication__Keycloak__ClientId:?Set the Keycloak client ID in .env. See docs/keycloak.md}
       Authentication__Keycloak__ClientSecret: ${Authentication__Keycloak__ClientSecret:?Set the Keycloak client secret in .env. See docs/keycloak.md}
 # @init:end
+# @init:if keycloak-prod=managed
+      # The stack's own Keycloak: tokens carry the public URL, the API calls Keycloak on the internal network.
+      Authentication__Keycloak__Authority: ${KEYCLOAK_PUBLIC_URL:?Set KEYCLOAK_PUBLIC_URL in .env. See docs/deployment.md}/realms/net-rock-template
+      Authentication__Keycloak__ClientId: net-rock-template
+      Authentication__Keycloak__ClientSecret: ${KEYCLOAK_CLIENT_SECRET:?Set KEYCLOAK_CLIENT_SECRET in .env. See docs/deployment.md}
+      Authentication__Keycloak__InternalUrl: http://keycloak:8080/realms/net-rock-template
+# @init:end
 # @init:if auth=keycloak frontend=blazor
       Authentication__Keycloak__CallbackBaseUrl: ${API_PUBLIC_URL}
 # @init:end
@@ -71,6 +78,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+# @init:if keycloak-prod=managed
+      keycloak:
+        condition: service_healthy
+# @init:end
+# @init:else
+# @init:if keycloak-prod=managed
+    depends_on:
+      keycloak:
+        condition: service_healthy
+# @init:end
 # @init:end
     restart: unless-stopped
     networks:
@@ -141,6 +158,59 @@ services:
       # - coolify
 
 # @init:end
+# @init:if keycloak-prod=managed
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.7
+    # Production mode. The realm in keycloak/prod is imported once; an existing realm is left unchanged.
+    command: [ "start", "--import-realm" ]
+    environment:
+      KC_DB: postgres
+# @init:if database=managed
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+# @init:else
+      KC_DB_URL: ${KC_DB_URL:?Set KC_DB_URL to Keycloak's own database in .env. See docs/deployment.md}
+      KC_DB_USERNAME: ${KC_DB_USERNAME:?Set KC_DB_USERNAME in .env. See docs/deployment.md}
+# @init:end
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Set KEYCLOAK_DB_PASSWORD in .env. See docs/deployment.md}
+      # Runs behind a TLS-terminating reverse proxy: plain HTTP inside, the public https URL outside.
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL:?Set KEYCLOAK_PUBLIC_URL in .env. See docs/deployment.md}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:?Set KEYCLOAK_ADMIN_USERNAME in .env. See docs/deployment.md}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in .env. See docs/deployment.md}
+      # Read by keycloak/prod/realm.json at import
+      KC_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?Set KEYCLOAK_CLIENT_SECRET in .env. See docs/deployment.md}
+# @init:if frontend=blazor
+      KC_CALLBACK_BASE_URL: ${API_PUBLIC_URL:?Set API_PUBLIC_URL in .env. See docs/deployment.md}
+# @init:else
+      KC_CALLBACK_BASE_URL: ${PUBLIC_URL:?Set PUBLIC_URL in .env. See docs/deployment.md}
+# @init:end
+      KC_WEB_ORIGIN: ${PUBLIC_URL:?Set PUBLIC_URL in .env. See docs/deployment.md}
+    volumes:
+      - ./keycloak/prod:/opt/keycloak/data/import:ro
+    ports:
+      - "${KEYCLOAK_PORT:-8081}:8080"
+    healthcheck:
+      # The image has no curl; bash's /dev/tcp reaches the management port (9000).
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3" ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+# @init:if database=managed
+    depends_on:
+      postgres:
+        condition: service_healthy
+# @init:end
+    restart: unless-stopped
+    networks:
+      - app
+      # - coolify
+
+# @init:end
 # @init:if database=managed
   postgres:
     image: postgres:17.6
@@ -148,8 +218,15 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+# @init:if keycloak-prod=managed
+      # Used by keycloak/postgres-init, which creates Keycloak's database and user on an empty volume only
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Set KEYCLOAK_DB_PASSWORD in .env. See docs/deployment.md}
+# @init:end
     volumes:
       - postgres-data:/var/lib/postgresql/data
+# @init:if keycloak-prod=managed
+      - ./keycloak/postgres-init:/docker-entrypoint-initdb.d:ro
+# @init:end
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 5s
