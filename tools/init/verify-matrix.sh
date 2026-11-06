@@ -27,6 +27,8 @@ mkdir -p "$WORK"
 LOG="$WORK/logs"
 mkdir -p "$LOG"
 FAILURES=()
+# Tree state when the run starts; generating projects must leave it exactly as it was.
+START_STATUS="$(cd "$ROOT" && git status --porcelain --untracked-files=all)"
 
 fe_run() {
     local dir="$1" cmd="$2"
@@ -304,7 +306,7 @@ case "$SCOPE" in
     all)
         check_template; check_full; check_blazor; check_matrix
         echo "== Template after generating"
-        step "template still unchanged" test -z "$(cd "$ROOT" && git status --porcelain --untracked-files=all | grep -v '^?? docs/init-options-handoff.md$')"
+        step "template still unchanged" test "$START_STATUS" == "$(cd "$ROOT" && git status --porcelain --untracked-files=all)"
         ;;
     *) echo "Unknown scope: $SCOPE" >&2; exit 2 ;;
 esac
