@@ -145,7 +145,8 @@ check_matrix() {
                     fi
                     step "$combo clean text" bash -c "! grep -rIl --exclude-dir=.git --exclude-dir=bin --exclude-dir=obj -e '@init:' -e 'NetRockTemplate' '$dir'"
                     if [[ "$deploy" == "aspire" ]]; then
-                        step "$combo aspire publish" aspire publish --project "$dir/src/backend/VerifyApp.AppHost/VerifyApp.AppHost.csproj" -o "$dir/aspire-output" --non-interactive
+                        # Run from the project: aspire writes aspire.config.json into the current folder.
+                        step "$combo aspire publish" bash -c "cd '$dir' && aspire publish --project src/backend/VerifyApp.AppHost/VerifyApp.AppHost.csproj -o aspire-output --non-interactive"
                         step "$combo no own compose" test ! -e "$dir/docker-compose.yaml"
                     else
                         step "$combo compose config" bash -c "cd '$dir' && cp .env.example .env && docker compose config -q"
@@ -165,7 +166,11 @@ case "$SCOPE" in
     full) check_full ;;
     blazor) check_blazor ;;
     matrix) check_matrix ;;
-    all) check_template; check_full; check_blazor; check_matrix ;;
+    all)
+        check_template; check_full; check_blazor; check_matrix
+        echo "== Template after generating"
+        step "template still unchanged" test -z "$(cd "$ROOT" && git status --porcelain --untracked-files=all | grep -v '^?? docs/init-options-handoff.md$')"
+        ;;
     *) echo "Unknown scope: $SCOPE" >&2; exit 2 ;;
 esac
 
